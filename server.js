@@ -105,7 +105,11 @@ const db = {
 // ── MIDDLEWARE ──
 app.use(cors({ origin:'*' }));
 app.use(express.json());
-// Static files WITHOUT auto-index so our '/' route controls the root page
+
+// Root ALWAYS → home.html (must be before static middleware)
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
+
+// Static files (index:false prevents Express from auto-serving index.html at /)
 app.use(express.static(__dirname, { index: false }));
 
 function authMiddleware(req, res, next) {
