@@ -17,7 +17,10 @@ const DB_FILE = path.join(__dirname, 'db.json');
 const JWT_SECRET = process.env.JWT_SECRET || 'wzchamp_super_secret_2026';
 const MONGODB_URL = process.env.MONGODB_URL || '';
 
-// ── Stripe & MercadoPago ──
+// Serve static files but WITHOUT auto-index (we control / manually)
+app.use(cors({ origin:'*' }));
+app.use(express.json());
+app.use(express.static(__dirname, { index: false }));
 const STRIPE_KEY = process.env.STRIPE_SECRET_KEY || '';
 const MP_TOKEN   = process.env.MP_ACCESS_TOKEN   || '';
 let stripe, mpClient;
@@ -278,7 +281,11 @@ app.get('/api/payments/pix/status/:paymentId', authMiddleware, async (req, res) 
 
 // ──────────────────────────────────────────────────────
 app.get('/api/plans', (req, res) => res.json(PLANS));
+// Root always → home.html
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
+// Any other non-API path → serve the .html file or fallback to home.html
 app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/')) return res.status(404).json({ error:'Not found' });
   const file = req.path.endsWith('.html') ? req.path.slice(1) : 'home.html';
   res.sendFile(path.join(__dirname, file), err => { if(err) res.sendFile(path.join(__dirname,'home.html')); });
 });
