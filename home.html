@@ -257,6 +257,7 @@ function renderHeaderAuth() {
     const u = JSON.parse(usr);
     const canManage = u.role === 'admin' || u.plan === 'pro' || u.plan === 'elite';
     el.innerHTML = `
+      ${u.role === 'admin' ? `<a href="admin.html" style="font-family:var(--font);font-size:12px;font-weight:800;letter-spacing:2px;color:var(--orange);padding:7px 12px;border-radius:6px;text-decoration:none;transition:.2s;border:1px solid rgba(255,106,0,0.3)" onmouseover="this.style.background='rgba(255,106,0,0.1)'" onmouseout="this.style.background='transparent'">⚙️ ADMIN</a>` : ''}
       ${canManage ? `<a href="index.html" style="display:flex;align-items:center;gap:6px;font-family:var(--font);font-size:12px;font-weight:800;letter-spacing:2px;color:#fff;background:linear-gradient(135deg,var(--orange),#cc5500);padding:8px 16px;border-radius:6px;text-decoration:none;white-space:nowrap">🏆 MEUS TORNEIOS</a>` : ''}
       <a href="profile.html" class="user-pill"><span class="user-dot"></span>${u.nickname}</a>`;
   } else {

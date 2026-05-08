@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Painel Admin — WZ Championship</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script>
+  (function(){
+    const raw = localStorage.getItem('wzc_user');
+    if (!raw) { window.location.replace('login.html'); return; }
+    const u = JSON.parse(raw);
+    if (u.role !== 'admin') { window.location.replace('home.html?access=denied'); }
+  })();
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --orange:#ff6a00;--red:#ff2d55;--green:#00ff87;--gold:#ffd700;--blue:#4facfe;
+  --bg:#080a0f;--bg1:#0d1017;--bg2:#131820;--card:#111620;
+  --border:rgba(255,106,0,0.18);--border2:rgba(255,255,255,0.06);
+  --text1:#f0f2f5;--text2:#8a96a8;--text3:#4a5568;
+  --font:'Barlow Condensed',sans-serif;--body:'Barlow',sans-serif;
+}
+body{background:var(--bg);color:var(--text1);font-family:var(--body);min-height:100vh}
+a{text-decoration:none;color:inherit}
+.container{max-width:1100px;margin:0 auto;padding:0 24px}
+
+header{position:sticky;top:0;z-index:100;background:rgba(8,10,15,0.96);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:64px;gap:16px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo svg{width:32px;height:32px;filter:drop-shadow(0 0 8px var(--orange))}
+.logo-name{font-family:var(--font);font-size:17px;font-weight:900;letter-spacing:3px}
+.logo-sub{font-family:var(--font);font-size:8px;letter-spacing:4px;color:var(--orange);display:block}
+.nav-links{display:flex;align-items:center;gap:8px}
+.nav-link{font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--text2);padding:7px 12px;border-radius:6px;transition:.2s;white-space:nowrap}
+.nav-link:hover{color:var(--orange);background:rgba(255,106,0,0.08)}
+.admin-badge{background:linear-gradient(135deg,#cc5500,var(--orange));color:#fff;font-family:var(--font);font-size:11px;font-weight:900;letter-spacing:2px;padding:5px 14px;border-radius:20px}
+
+.page{padding:40px 0 80px}
+.page-header{margin-bottom:32px}
+.page-title{font-family:var(--font);font-size:32px;font-weight:900;letter-spacing:4px}
+.page-title span{color:var(--orange)}
+.page-sub{font-family:var(--font);font-size:12px;letter-spacing:2px;color:var(--text3);margin-top:4px}
+
+/* STATS BAR */
+.stats-bar{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:32px}
+.stat-card{background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:16px;text-align:center}
+.stat-val{font-family:var(--font);font-size:28px;font-weight:900;color:var(--orange)}
+.stat-lbl{font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text3);margin-top:2px}
+
+/* FILTER */
+.filter-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.filter-btn{font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:1.5px;padding:7px 16px;border-radius:6px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;transition:.2s}
+.filter-btn:hover,.filter-btn.active{border-color:var(--orange);color:var(--orange);background:rgba(255,106,0,0.08)}
+.search-input{flex:1;min-width:200px;background:var(--bg2);border:1px solid var(--border2);color:var(--text1);font-family:var(--body);font-size:13px;padding:8px 14px;border-radius:6px;outline:none;transition:.2s}
+.search-input:focus{border-color:var(--orange)}
+.search-input::placeholder{color:var(--text3)}
+
+/* TABLE */
+.table-wrap{background:var(--card);border:1px solid var(--border2);border-radius:12px;overflow:hidden}
+.users-table{width:100%;border-collapse:collapse}
+.users-table th{font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text3);padding:12px 16px;text-align:left;border-bottom:1px solid var(--border2);white-space:nowrap}
+.users-table td{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.03);font-size:13px;vertical-align:middle}
+.users-table tr:last-child td{border-bottom:none}
+.users-table tr:hover td{background:rgba(255,255,255,0.02)}
+
+.nick{font-family:var(--font);font-size:14px;font-weight:800;letter-spacing:1px}
+.email-cell{color:var(--text2);font-size:12px}
+.role-badge{font-family:var(--font);font-size:10px;font-weight:800;letter-spacing:2px;padding:3px 10px;border-radius:20px}
+.role-admin{background:rgba(255,106,0,0.15);color:var(--orange);border:1px solid rgba(255,106,0,0.3)}
+.role-user{background:rgba(255,255,255,0.05);color:var(--text3);border:1px solid var(--border2)}
+.plan-tag{font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:1.5px;padding:2px 8px;border-radius:10px}
+.plan-free{color:var(--text2);background:rgba(255,255,255,.05)}
+.plan-pro{color:var(--orange);background:rgba(255,106,0,.1)}
+.plan-elite{color:var(--gold);background:rgba(255,215,0,.1)}
+.status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
+.s-active{background:var(--green)}
+.s-pending{background:var(--gold)}
+.s-banned{background:var(--red)}
+
+/* ACTION BUTTONS */
+.actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.act-btn{font-family:var(--font);font-size:10px;font-weight:800;letter-spacing:1px;padding:5px 10px;border-radius:5px;border:none;cursor:pointer;transition:.2s;white-space:nowrap}
+.act-approve{background:rgba(0,255,135,0.12);color:var(--green);border:1px solid rgba(0,255,135,0.25)}
+.act-approve:hover{background:rgba(0,255,135,0.25)}
+.act-ban{background:rgba(255,45,85,0.1);color:var(--red);border:1px solid rgba(255,45,85,0.25)}
+.act-ban:hover{background:rgba(255,45,85,0.22)}
+.act-admin{background:rgba(255,106,0,0.12);color:var(--orange);border:1px solid rgba(255,106,0,0.25)}
+.act-admin:hover{background:rgba(255,106,0,0.25)}
+.act-demote{background:rgba(255,255,255,0.05);color:var(--text2);border:1px solid var(--border2)}
+.act-demote:hover{border-color:var(--red);color:var(--red)}
+.plan-select{background:var(--bg2);border:1px solid var(--border2);color:var(--text1);font-family:var(--font);font-size:11px;padding:4px 8px;border-radius:5px;cursor:pointer;outline:none}
+.plan-select:focus{border-color:var(--orange)}
+
+/* EMPTY */
+.empty-row td{text-align:center;padding:40px;font-family:var(--font);font-size:14px;letter-spacing:2px;color:var(--text3)}
+
+/* TOAST */
+.toast{position:fixed;top:24px;right:24px;z-index:9999;background:rgba(0,255,135,0.12);border:1px solid rgba(0,255,135,0.25);color:var(--green);font-family:var(--font);font-size:13px;font-weight:700;letter-spacing:1px;padding:14px 22px;border-radius:10px;backdrop-filter:blur(8px);transform:translateY(-80px);opacity:0;transition:.35s cubic-bezier(.34,1.56,.64,1)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.err{background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.25);color:var(--red)}
+
+@media(max-width:768px){.stats-bar{grid-template-columns:repeat(3,1fr)}.actions{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container header-inner">
+    <a class="logo" href="home.html">
+      <svg viewBox="0 0 60 60" fill="none">
+        <polygon points="30,2 56,16 56,44 30,58 4,44 4,16" stroke="#ff6a00" stroke-width="2" fill="none"/>
+        <circle cx="30" cy="30" r="12" stroke="#ff6a00" stroke-width="1.5" fill="none"/>
+        <line x1="30" y1="18" x2="30" y2="42" stroke="#ff6a00" stroke-width="1.5"/>
+        <line x1="18" y1="30" x2="42" y2="30" stroke="#ff6a00" stroke-width="1.5"/>
+        <circle cx="30" cy="30" r="3" fill="#ff6a00"/>
+      </svg>
+      <div><span class="logo-name">WZ CHAMPIONSHIP</span><span class="logo-sub">TOURNAMENT SYSTEM</span></div>
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="home.html">🏠 INÍCIO</a>
+      <a class="nav-link" href="index.html">🏆 TORNEIOS</a>
+      <a class="nav-link" href="profile.html">👤 CONTA</a>
+      <span class="admin-badge">⚙️ ADMIN</span>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+  <div class="container">
+    <div class="page-header">
+      <div class="page-title">PAINEL <span>ADMIN</span></div>
+      <div class="page-sub">GESTÃO DE USUÁRIOS E PERMISSÕES</div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-bar" id="stats-bar">
+      <div class="stat-card"><div class="stat-val" id="st-total">—</div><div class="stat-lbl">TOTAL</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--green)" id="st-active">—</div><div class="stat-lbl">ATIVOS</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--gold)" id="st-pending">—</div><div class="stat-lbl">PENDENTES</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--red)" id="st-banned">—</div><div class="stat-lbl">BANIDOS</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--orange)" id="st-pro">—</div><div class="stat-lbl">PRO</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--gold)" id="st-elite">—</div><div class="stat-lbl">ELITE</div></div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filter-bar">
+      <input class="search-input" id="search" placeholder="🔍  Buscar por nickname ou email..." oninput="filterUsers()"/>
+      <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">TODOS</button>
+      <button class="filter-btn" data-filter="pending" onclick="setFilter('pending',this)">⏳ PENDENTES</button>
+      <button class="filter-btn" data-filter="active" onclick="setFilter('active',this)">✅ ATIVOS</button>
+      <button class="filter-btn" data-filter="banned" onclick="setFilter('banned',this)">🚫 BANIDOS</button>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrap">
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>USUÁRIO</th>
+            <th>EMAIL</th>
+            <th>ROLE</th>
+            <th>PLANO</th>
+            <th>STATUS</th>
+            <th>AÇÕES</th>
+          </tr>
+        </thead>
+        <tbody id="users-tbody">
+          <tr class="empty-row"><td colspan="6">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api';
+const TOKEN = localStorage.getItem('wzc_token');
+const ME = JSON.parse(localStorage.getItem('wzc_user') || '{}');
+let allUsers = [];
+let currentFilter = 'all';
+
+function toast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+async function api(method, path, body) {
+  const r = await fetch(`${API}${path}`, {
+    method,
+    headers: { 'Content-Type':'application/json', Authorization:`Bearer ${TOKEN}` },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || 'Erro');
+  return d;
+}
+
+async function loadStats() {
+  try {
+    const s = await api('GET', '/admin/stats');
+    document.getElementById('st-total').textContent = s.total;
+    document.getElementById('st-active').textContent = s.active;
+    document.getElementById('st-pending').textContent = s.pending;
+    document.getElementById('st-banned').textContent = s.banned;
+    document.getElementById('st-pro').textContent = s.pro;
+    document.getElementById('st-elite').textContent = s.elite;
+  } catch {}
+}
+
+async function loadUsers() {
+  try {
+    allUsers = await api('GET', '/admin/users');
+    renderTable();
+    loadStats();
+  } catch(e) {
+    document.getElementById('users-tbody').innerHTML =
+      `<tr class="empty-row"><td colspan="6">Erro ao carregar: ${e.message}</td></tr>`;
+  }
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
+
+function filterUsers() { renderTable(); }
+
+function renderTable() {
+  const q = document.getElementById('search').value.toLowerCase();
+  let list = allUsers.filter(u => {
+    if (currentFilter !== 'all' && u.status !== currentFilter) return false;
+    if (q && !u.nickname.toLowerCase().includes(q) && !u.email.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  if (!list.length) {
+    document.getElementById('users-tbody').innerHTML =
+      `<tr class="empty-row"><td colspan="6">Nenhum usuário encontrado</td></tr>`;
+    return;
+  }
+
+  document.getElementById('users-tbody').innerHTML = list.map(u => {
+    const isMe = u.id === ME.id;
+    const statusDot = `<span class="status-dot s-${u.status}"></span>${u.status.charAt(0).toUpperCase()+u.status.slice(1)}`;
+    const roleBadge = `<span class="role-badge role-${u.role}">${u.role.toUpperCase()}</span>`;
+    const planBadge = `<span class="plan-tag plan-${u.plan}">${u.plan.toUpperCase()}</span>`;
+
+    const actions = [];
+    if (u.status === 'pending') actions.push(`<button class="act-btn act-approve" onclick="approveUser('${u.id}')">✓ APROVAR</button>`);
+    if (u.status === 'active' && !isMe) actions.push(`<button class="act-btn act-ban" onclick="banUser('${u.id}')">🚫 BANIR</button>`);
+    if (u.status === 'banned') actions.push(`<button class="act-btn act-approve" onclick="approveUser('${u.id}')">↩ REATIVAR</button>`);
+
+    if (!isMe) {
+      if (u.role !== 'admin') {
+        actions.push(`<button class="act-btn act-admin" onclick="setRole('${u.id}','admin')">⬆ TORNAR ADMIN</button>`);
+      } else {
+        actions.push(`<button class="act-btn act-demote" onclick="setRole('${u.id}','user')">⬇ REMOVER ADMIN</button>`);
+      }
+    }
+
+    actions.push(`
+      <select class="plan-select" onchange="setPlan('${u.id}',this.value)" title="Mudar plano">
+        <option value="">Plano...</option>
+        <option value="free" ${u.plan==='free'?'selected':''}>FREE</option>
+        <option value="pro"  ${u.plan==='pro'?'selected':''}>PRO</option>
+        <option value="elite"${u.plan==='elite'?'selected':''}>ELITE</option>
+      </select>`);
+
+    return `<tr>
+      <td><span class="nick">${u.nickname}${isMe?' <span style="color:var(--text3);font-size:10px">(você)</span>':''}</span></td>
+      <td class="email-cell">${u.email}</td>
+      <td>${roleBadge}</td>
+      <td>${planBadge}</td>
+      <td>${statusDot}</td>
+      <td><div class="actions">${actions.join('')}</div></td>
+    </tr>`;
+  }).join('');
+}
+
+async function approveUser(id) {
+  try {
+    const d = await api('PATCH', `/admin/users/${id}/approve`);
+    toast(d.message);
+    await loadUsers();
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function banUser(id) {
+  if (!confirm('Banir este usuário?')) return;
+  try {
+    const d = await api('PATCH', `/admin/users/${id}/ban`);
+    toast(d.message, 'err');
+    await loadUsers();
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function setRole(id, role) {
+  const action = role === 'admin' ? 'Tornar Admin' : 'Remover Admin de';
+  const user = allUsers.find(u => u.id === id);
+  if (!confirm(`${action} ${user?.nickname}?`)) return;
+  try {
+    const d = await api('PATCH', `/admin/users/${id}/role`, { role });
+    toast(d.message);
+    await loadUsers();
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function setPlan(id, plan) {
+  if (!plan) return;
+  try {
+    const d = await api('PATCH', `/admin/users/${id}/plan`, { plan });
+    toast(d.message);
+    await loadUsers();
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+// Init
+loadUsers();
+// Auto-refresh every 30s
+setInterval(loadUsers, 30000);
+</script>
+</body>
+</html>

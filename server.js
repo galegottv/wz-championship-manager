@@ -217,6 +217,20 @@ app.patch('/api/admin/users/:id/plan', adminOnly, async (req, res) => {
   res.json({ message:`Plano de ${user.nickname} → ${plan.toUpperCase()}` });
 });
 
+app.patch('/api/admin/users/:id/role', adminOnly, async (req, res) => {
+  const { role } = req.body;
+  if (!['admin','user'].includes(role)) return res.status(400).json({ error:'Role inválido. Use: admin ou user' });
+  if (req.params.id === req.user.id) return res.status(403).json({ error:'Você não pode alterar seu próprio role' });
+  const user = await db.findUser({ id:req.params.id });
+  if (!user) return res.status(404).json({ error:'Não encontrado' });
+  // Promote: also set plan to elite and status to active
+  const update = { role };
+  if (role === 'admin') { update.plan = 'elite'; update.status = 'active'; }
+  const updated = await db.updateUser(req.params.id, update);
+  res.json({ message: role === 'admin' ? `${updated.nickname} agora é Admin!` : `${updated.nickname} voltou para Usuário` });
+});
+
+
 app.get('/api/admin/stats', adminOnly, async (req, res) => {
   const users = await db.allUsers();
   res.json({
