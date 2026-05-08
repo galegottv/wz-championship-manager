@@ -1,0 +1,18 @@
+{
+  "users": [
+    {
+      "id": "admin-001",
+      "nickname": "Admin",
+      "email": "admin@wzchamp.gg",
+      "passwordHash": "$2a$10$rQ3LtB1vMkQ2YZs1sY1TOuAdRpMm0sBVCGi3Xb2.XFaAWYpJl0Tm6",
+      "role": "admin",
+      "plan": "elite",
+      "status": "active",
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "stripeCustomerId": null,
+      "subscriptionId": null,
+      "subscriptionExpiry": null
+    }
+  ],
+  "championships": []
+}

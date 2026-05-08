@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>WZ Overlay</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--orange:#ff6a00;--red:#ff2d55;--green:#00ff87;--gold:#ffd700;--font:'Barlow Condensed',sans-serif}
+body{background:transparent;font-family:var(--font);width:800px;padding:12px}
+.overlay{background:rgba(8,10,15,0.88);border:1px solid rgba(255,106,0,0.3);border-radius:10px;overflow:hidden;backdrop-filter:blur(8px);box-shadow:0 8px 40px rgba(0,0,0,0.7)}
+.header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:linear-gradient(90deg,rgba(255,106,0,0.2),rgba(255,106,0,0.05));border-bottom:1px solid rgba(255,106,0,0.2)}
+.header-left{display:flex;align-items:center;gap:10px}
+.logo-hex{width:28px;height:28px;filter:drop-shadow(0 0 6px var(--orange))}
+.champ-name{font-size:16px;font-weight:900;letter-spacing:3px;color:#fff}
+.champ-phase{font-size:10px;font-weight:600;letter-spacing:2px;color:var(--orange);margin-top:1px}
+.live-pill{display:flex;align-items:center;gap:6px;background:rgba(255,45,85,0.2);border:1px solid rgba(255,45,85,0.5);color:var(--red);font-size:10px;font-weight:700;letter-spacing:3px;padding:3px 10px;border-radius:20px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:p 1.2s infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+.table-header{display:grid;grid-template-columns:32px 1fr 56px 52px 52px;gap:0;padding:6px 14px;background:rgba(255,255,255,0.03)}
+.th{font-size:10px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.3);text-align:center}
+.th:nth-child(2){text-align:left}
+.row{display:grid;grid-template-columns:32px 1fr 56px 52px 52px;align-items:center;padding:7px 14px;border-bottom:1px solid rgba(255,255,255,0.04);transition:background .3s}
+.row:last-child{border-bottom:none}
+.row:hover{background:rgba(255,106,0,0.04)}
+.row.top1{background:linear-gradient(90deg,rgba(255,215,0,0.08),transparent)}
+.row.top2{background:linear-gradient(90deg,rgba(192,192,192,0.06),transparent)}
+.row.top3{background:linear-gradient(90deg,rgba(205,127,50,0.06),transparent)}
+.pos{font-size:14px;font-weight:900;text-align:center}
+.pos.p1{color:var(--gold)}
+.pos.p2{color:#c0c0c0}
+.pos.p3{color:#cd7f32}
+.pos.po{color:rgba(255,255,255,0.3);font-size:12px}
+.team-cell{display:flex;align-items:center;gap:8px}
+.team-bar{width:3px;height:26px;border-radius:2px;flex-shrink:0}
+.team-tag{font-size:11px;font-weight:800;letter-spacing:1px;color:rgba(255,255,255,0.5);min-width:28px}
+.team-name{font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pts{font-size:17px;font-weight:900;color:var(--orange);text-align:center}
+.kills{font-size:13px;font-weight:700;color:rgba(255,255,255,0.6);text-align:center}
+.played{font-size:11px;font-weight:600;color:rgba(255,255,255,0.3);text-align:center}
+.footer-bar{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;background:rgba(0,0,0,0.3);border-top:1px solid rgba(255,106,0,0.15)}
+.footer-mode{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--orange)}
+.footer-update{font-size:9px;letter-spacing:1px;color:rgba(255,255,255,0.2)}
+</style>
+</head>
+<body>
+<div class="overlay">
+  <div class="header">
+    <div class="header-left">
+      <svg class="logo-hex" viewBox="0 0 60 60" fill="none">
+        <polygon points="30,2 56,16 56,44 30,58 4,44 4,16" stroke="#ff6a00" stroke-width="2" fill="none"/>
+        <circle cx="30" cy="30" r="10" stroke="#ff6a00" stroke-width="1.5" fill="none"/>
+        <circle cx="30" cy="30" r="3" fill="#ff6a00"/>
+      </svg>
+      <div>
+        <div class="champ-name" id="ov-name">WZ CHAMPIONSHIP</div>
+        <div class="champ-phase" id="ov-phase">LEADERBOARD</div>
+      </div>
+    </div>
+    <div class="live-pill"><span class="live-dot"></span>AO VIVO</div>
+  </div>
+  <div class="table-header">
+    <div class="th">#</div><div class="th">TIME</div>
+    <div class="th">PTS</div><div class="th">KILLS</div><div class="th">P</div>
+  </div>
+  <div id="ov-body"></div>
+  <div class="footer-bar">
+    <span class="footer-mode" id="ov-mode">RESSURGÊNCIA</span>
+    <span class="footer-update" id="ov-time"></span>
+  </div>
+</div>
+<script>
+const LS_KEY='wzc_v3';
+const POINTS={resurgence:[15,12,9,7,5,4,3,3,2,2,1,1,1,1,1,0,0,0,0,0],br:[25,20,17,15,13,11,9,8,7,6,5,4,3,2,2,1,1,1,1,0]};
+
+function getPoints(mode,pl){return POINTS[mode][pl-1]||0}
+function standings(S){
+  return S.teams.map(t=>{
+    let pts=0,kills=0,played=0;
+    S.matches.filter(m=>m.status==='done').forEach(m=>{
+      const r=m.results.find(r=>r.teamId===t.id);if(!r)return;
+      played++;kills+=r.kills;pts+=getPoints(S.mode,r.placement)+r.kills;
+    });
+    return{...t,pts,kills,played};
+  }).sort((a,b)=>b.pts-a.pts||b.kills-a.kills);
+}
+
+function render(){
+  const raw=localStorage.getItem(LS_KEY);
+  if(!raw)return;
+  const S=JSON.parse(raw);
+  document.getElementById('ov-name').textContent=(S.name||'WZ CHAMPIONSHIP').toUpperCase();
+  document.getElementById('ov-phase').textContent=(S.phase||'LEADERBOARD').toUpperCase();
+  document.getElementById('ov-mode').textContent=S.mode==='resurgence'?'🔄 RESSURGÊNCIA':'💀 BATTLE ROYALE';
+  document.getElementById('ov-time').textContent='Atualizado: '+new Date().toLocaleTimeString('pt-BR');
+  const top=standings(S).slice(0,10);
+  const medals=['🥇','🥈','🥉'];
+  const rowCls=['top1','top2','top3'];
+  document.getElementById('ov-body').innerHTML=top.map((t,i)=>{
+    const pos=i+1;
+    const posCls=pos<=3?`p${pos}`:'po';
+    const posLabel=medals[i]||pos;
+    const rc=rowCls[i]||'';
+    return`<div class="row ${rc}">
+      <div class="pos ${posCls}">${posLabel}</div>
+      <div class="team-cell">
+        <div class="team-bar" style="background:${t.color||'#ff6a00'}"></div>
+        <span class="team-tag">${t.tag}</span>
+        <span class="team-name">${t.name}</span>
+      </div>
+      <div class="pts">${t.pts}</div>
+      <div class="kills">${t.kills}</div>
+      <div class="played">${t.played}</div>
+    </div>`;
+  }).join('');
+}
+render();
+setInterval(render,3000);
+</script>
+</body>
+</html>

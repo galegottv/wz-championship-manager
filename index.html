@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>WZ Championship Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- ===== SITE HEADER ===== -->
+<header class="site-header">
+  <div class="header-bg"></div>
+  <div class="header-inner">
+    <a class="logo-area" href="home.html" title="Página Inicial" style="text-decoration:none;color:inherit">
+      <svg class="logo-icon" viewBox="0 0 60 60" fill="none">
+        <polygon points="30,2 56,16 56,44 30,58 4,44 4,16" fill="none" stroke="#ff6a00" stroke-width="2"/>
+        <circle cx="30" cy="30" r="12" fill="none" stroke="#ff6a00" stroke-width="1.5"/>
+        <line x1="30" y1="18" x2="30" y2="42" stroke="#ff6a00" stroke-width="1.5"/>
+        <line x1="18" y1="30" x2="42" y2="30" stroke="#ff6a00" stroke-width="1.5"/>
+        <circle cx="30" cy="30" r="3" fill="#ff6a00"/>
+      </svg>
+      <div class="logo-text">
+        <span class="logo-title" id="logo-tournament-name">WZ MANAGER</span>
+        <span class="logo-sub">CHAMPIONSHIP SYSTEM</span>
+      </div>
+    </a>
+
+    <!-- CHAMPIONSHIP TABS -->
+    <div class="champ-tabs-wrap">
+      <div class="champ-tabs" id="champ-tabs">
+        <!-- filled by JS -->
+      </div>
+      <button class="btn-new-champ" id="btn-new-champ" title="Novo Campeonato">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        NOVO
+      </button>
+    </div>
+
+    <!-- HEADER RIGHT -->
+    <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+      <a href="home.html" style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-2);padding:6px 12px;border-radius:6px;border:1px solid transparent;transition:.2s;text-decoration:none" onmouseover="this.style.color='var(--orange)';this.style.borderColor='var(--border)'" onmouseout="this.style.color='var(--text-2)';this.style.borderColor='transparent'">🏠 INÍCIO</a>
+      <div id="hdr-user-pill"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== NO CHAMPIONSHIP SCREEN ===== -->
+<div class="empty-screen" id="empty-screen">
+  <div class="empty-icon">
+    <svg viewBox="0 0 60 60" fill="none" width="80" height="80">
+      <polygon points="30,2 56,16 56,44 30,58 4,44 4,16" fill="none" stroke="#ff6a00" stroke-width="2" opacity="0.5"/>
+      <circle cx="30" cy="30" r="12" fill="none" stroke="#ff6a00" stroke-width="1.5" opacity="0.5"/>
+      <line x1="30" y1="18" x2="30" y2="42" stroke="#ff6a00" stroke-width="1.5" opacity="0.5"/>
+      <line x1="18" y1="30" x2="42" y2="30" stroke="#ff6a00" stroke-width="1.5" opacity="0.5"/>
+    </svg>
+  </div>
+  <h2 class="empty-title">NENHUM CAMPEONATO</h2>
+  <p class="empty-desc">Clique em <strong>+ NOVO</strong> para criar seu primeiro campeonato</p>
+  <button class="btn-create-first" id="btn-create-first">
+    + CRIAR CAMPEONATO
+  </button>
+</div>
+
+<!-- ===== ACTIVE CHAMPIONSHIP ===== -->
+<div class="champ-view" id="champ-view" style="display:none">
+
+  <!-- HERO -->
+  <section class="hero-banner">
+    <div class="hero-bg"></div>
+    <div class="container hero-content">
+      <div class="hero-top-row">
+        <a class="live-badge pulse" id="live-badge" href="#" target="_blank" rel="noopener" title="Ir para a live"><span class="live-dot"></span> AO VIVO</a>
+        <div class="mode-toggle-wrap">
+          <button class="mode-btn" id="mode-btn-resurgence" data-mode="resurgence">🔄 RESSURGÊNCIA</button>
+          <button class="mode-btn" id="mode-btn-br" data-mode="br">💀 BATTLE ROYALE</button>
+        </div>
+        <button class="btn-delete-champ" id="btn-delete-champ" title="Excluir campeonato">🗑 EXCLUIR</button>
+      </div>
+      <h1 class="hero-title" id="hero-tournament-name">WZ CHAMPIONSHIP</h1>
+      <p class="hero-subtitle"><span id="hero-season-label"></span> — <span id="hero-phase-label">Fase de Grupos</span></p>
+      <div class="hero-stats">
+        <div class="stat-item"><span class="stat-value" id="hero-teams-count">0</span><span class="stat-label">TIMES</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat-item"><span class="stat-value" id="hero-prize">—</span><span class="stat-label">PRIZE</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat-item"><span class="stat-value" id="hero-matches-count">0</span><span class="stat-label">PARTIDAS</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat-item"><span class="stat-value" id="hero-mode-label">RESSURG.</span><span class="stat-label">MODO</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUB-NAV -->
+  <nav class="sub-nav">
+    <div class="container sub-nav-inner">
+      <a href="#" class="sub-link active" data-sub="standings">📊 STANDINGS</a>
+      <a href="#" class="sub-link" data-sub="groups">👥 GRUPOS</a>
+      <a href="#" class="sub-link" data-sub="matches">🎮 PARTIDAS</a>
+      <a href="#" class="sub-link" data-sub="bracket">🏆 BRACKET</a>
+      <a href="#" class="sub-link" data-sub="pontos">📋 PONTUAÇÃO</a>
+      <a href="#" class="sub-link sub-admin" data-sub="setup">⚙ CONFIGURAR</a>
+      <a href="#" class="sub-link sub-admin" data-sub="admin">✅ RESULTADOS</a>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <main class="main-content container">
+
+    <!-- STANDINGS -->
+    <section class="sub-panel active" id="sub-standings">
+      <div class="section-header">
+        <h2 class="section-title">CLASSIFICAÇÃO GERAL</h2>
+        <select class="filter-select" id="standings-group-filter"><option value="all">Todos os Grupos</option></select>
+      </div>
+      <div class="standings-table-wrap">
+        <table class="standings-table">
+          <thead><tr>
+            <th>#</th><th class="th-team">TIME</th><th>GRP</th>
+            <th>PTS</th><th>KILLS</th><th>P</th><th>V</th><th>TOP5</th><th>AVG</th><th>STATUS</th>
+          </tr></thead>
+          <tbody id="standings-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- GROUPS -->
+    <section class="sub-panel" id="sub-groups">
+      <div class="section-header">
+        <h2 class="section-title">FASE DE GRUPOS</h2>
+        <span class="section-badge" id="groups-badge">—</span>
+      </div>
+      <div class="groups-grid" id="groups-grid"></div>
+    </section>
+
+    <!-- MATCHES -->
+    <section class="sub-panel" id="sub-matches">
+      <div class="section-header">
+        <h2 class="section-title">PARTIDAS</h2>
+        <div class="section-actions">
+          <select class="filter-select" id="match-round-filter"><option value="all">Todas as Rodadas</option></select>
+          <select class="filter-select" id="match-status-filter">
+            <option value="all">Todos</option>
+            <option value="live">Ao Vivo</option>
+            <option value="done">Finalizados</option>
+            <option value="upcoming">Próximos</option>
+          </select>
+        </div>
+      </div>
+      <div class="matches-list" id="matches-list"></div>
+    </section>
+
+    <!-- BRACKET -->
+    <section class="sub-panel" id="sub-bracket">
+      <div class="section-header">
+        <h2 class="section-title">BRACKET — PLAYOFFS</h2>
+        <span class="section-badge warning">Automático após grupos</span>
+      </div>
+      <div class="bracket-wrap" id="bracket-wrap"></div>
+    </section>
+
+    <!-- PONTUAÇÃO -->
+    <section class="sub-panel" id="sub-pontos">
+      <div class="section-header">
+        <h2 class="section-title">TABELA DE PONTUAÇÃO OFICIAL</h2>
+        <div class="mode-toggle-wrap">
+          <button class="mode-btn" id="pts-btn-res" data-pts-mode="resurgence">🔄 RESSURGÊNCIA</button>
+          <button class="mode-btn" id="pts-btn-br" data-pts-mode="br">💀 BATTLE ROYALE</button>
+        </div>
+      </div>
+      <div class="pts-grid">
+        <div class="pts-card">
+          <div class="pts-card-header">
+            <span class="pts-card-title" id="pts-mode-title">RESSURGÊNCIA</span>
+            <span class="pts-card-subtitle">Formato Oficial WZ Championship</span>
+          </div>
+          <table class="pts-table">
+            <thead><tr><th>POSIÇÃO</th><th>PONTOS</th><th>DETALHE</th></tr></thead>
+            <tbody id="pts-table-body"></tbody>
+          </table>
+        </div>
+        <div class="pts-card">
+          <div class="pts-card-header">
+            <span class="pts-card-title">PONTOS POR ELIMINAÇÃO</span>
+            <span class="pts-card-subtitle">Por kill confirmada</span>
+          </div>
+          <div class="pts-kill-info">
+            <div class="pts-kill-big">+1 PT</div>
+            <div class="pts-kill-desc">por eliminação confirmada</div>
+            <div class="pts-kill-note">Sem limite de kills por partida</div>
+          </div>
+          <div class="pts-card-header" style="margin-top:16px">
+            <span class="pts-card-title">EXEMPLO</span>
+            <span class="pts-card-subtitle">1º lugar + 8 kills</span>
+          </div>
+          <div class="pts-example" id="pts-example"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONFIGURAR -->
+    <section class="sub-panel" id="sub-setup">
+      <div class="section-header">
+        <h2 class="section-title">CONFIGURAR CAMPEONATO</h2>
+        <div style="display:flex;gap:8px">
+          <button class="btn-danger-sm" id="btn-reset-all">🗑 RESETAR TUDO</button>
+        </div>
+      </div>
+
+      <div class="setup-block">
+        <div class="setup-block-title"><span class="setup-step-num">1</span> INFORMAÇÕES</div>
+        <div class="setup-form-row">
+          <div class="form-group"><label class="form-label">Nome</label><input type="text" class="form-control" id="cfg-tournament-name" placeholder="Ex: WZ Open 2026"/></div>
+          <div class="form-group"><label class="form-label">Temporada</label><input type="text" class="form-control" id="cfg-season" placeholder="Ex: Season 4"/></div>
+          <div class="form-group"><label class="form-label">Fase</label><input type="text" class="form-control" id="cfg-phase" placeholder="Ex: Fase de Grupos — Semana 1"/></div>
+          <div class="form-group"><label class="form-label">Prize Pool</label><input type="text" class="form-control" id="cfg-prize" placeholder="Ex: $50,000"/></div>
+        </div>
+        <div class="setup-form-row">
+          <div class="form-group"><label class="form-label">Modo</label>
+            <select class="form-control" id="cfg-mode">
+              <option value="resurgence">🔄 Ressurgência — Rebirth Island / Haven's Hollow</option>
+              <option value="br">💀 Battle Royale — Verdansk / Avalon</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Rodadas por Grupo</label><input type="number" class="form-control" id="cfg-rounds" min="1" max="20" value="4"/></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="btn-primary" id="btn-save-info">SALVAR</button>
+          <div class="admin-feedback" id="info-feedback"></div>
+        </div>
+      </div>
+
+      <div class="setup-block">
+        <div class="setup-block-title"><span class="setup-step-num">2</span> GRUPOS</div>
+        <div class="setup-form-row">
+          <div class="form-group"><label class="form-label">Nome do Grupo</label><input type="text" class="form-control" id="cfg-group-name" placeholder="Ex: A" maxlength="10"/></div>
+          <div class="form-group" style="justify-content:flex-end"><button class="btn-primary" id="btn-add-group" style="margin-top:auto">+ ADICIONAR</button></div>
+        </div>
+        <div id="groups-manage-list" class="manage-list"></div>
+      </div>
+
+      <div class="setup-block">
+        <div class="setup-block-title"><span class="setup-step-num">3</span> TIMES</div>
+        <div class="setup-form-row">
+          <div class="form-group"><label class="form-label">Nome</label><input type="text" class="form-control" id="cfg-team-name" placeholder="Ex: OpTic Gaming"/></div>
+          <div class="form-group"><label class="form-label">Tag</label><input type="text" class="form-control" id="cfg-team-tag" maxlength="5" placeholder="OPT"/></div>
+          <div class="form-group"><label class="form-label">Grupo</label><select class="form-control" id="cfg-team-group"></select></div>
+          <div class="form-group"><label class="form-label">Cor</label><input type="color" class="form-control color-input" id="cfg-team-color" value="#ff6a00"/></div>
+          <div class="form-group" style="justify-content:flex-end"><button class="btn-primary" id="btn-cfg-add-team" style="margin-top:auto">+ ADICIONAR</button></div>
+        </div>
+        <div class="admin-feedback" id="cfg-team-feedback"></div>
+        <div id="teams-manage-list" class="manage-list"></div>
+      </div>
+
+      <div class="setup-block">
+        <div class="setup-block-title"><span class="setup-step-num">4</span> BACKUP</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn-secondary" id="btn-export-json">⬇ EXPORTAR JSON</button>
+          <button class="btn-secondary" id="btn-import-json">⬆ IMPORTAR JSON</button>
+          <input type="file" id="import-file-input" accept=".json" style="display:none"/>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULTADOS -->
+    <section class="sub-panel" id="sub-admin">
+      <div class="section-header"><h2 class="section-title">REGISTRAR RESULTADOS</h2></div>
+      <div class="admin-grid">
+        <div class="admin-card">
+          <h3 class="admin-card-title">RESULTADO DE PARTIDA</h3>
+          <div class="form-group"><label class="form-label">Rodada</label><select class="form-control" id="admin-round"></select></div>
+          <div class="form-group"><label class="form-label">Time</label><select class="form-control" id="admin-team"></select></div>
+          <div class="form-group">
+            <label class="form-label">🗺 MAPA</label>
+            <div class="map-picker" id="map-picker"></div>
+            <input type="hidden" id="admin-map" value=""/>
+          </div>
+          <div class="form-group"><label class="form-label">Posição (1–20)</label><input type="number" class="form-control" id="admin-placement" min="1" max="20" placeholder="Ex: 1"/></div>
+          <div class="form-group"><label class="form-label">Kills</label><input type="number" class="form-control" id="admin-kills" min="0" max="99" placeholder="Ex: 8"/></div>
+          <button class="btn-primary" id="btn-add-result">REGISTRAR</button>
+          <div class="admin-feedback" id="result-feedback"></div>
+        </div>
+        <div class="admin-card">
+          <h3 class="admin-card-title">CONTROLES</h3>
+          <div class="admin-actions-list">
+            <button class="btn-secondary" id="btn-toggle-live">🔴 TOGGLE AO VIVO</button>
+            <button class="btn-secondary" id="btn-open-overlay" onclick="window.open('overlay.html','_blank','width=820,height=480')">🎬 ABRIR OVERLAY (OBS)</button>
+            <button class="btn-secondary" id="btn-copy-overlay" onclick="copyOverlayLink()">📋 COPIAR LINK OVERLAY</button>
+          </div>
+          <div class="live-url-block">
+            <label class="form-label">🎥 LINK DA LIVE</label>
+            <div class="live-url-row">
+              <input type="url" class="form-control" id="cfg-live-url" placeholder="https://twitch.tv/seucanal  ou  youtube.com/live/..."/>
+              <button class="btn-save-live" id="btn-save-live-url" title="Salvar link">SALVAR</button>
+            </div>
+            <div class="admin-feedback" id="live-url-feedback"></div>
+          </div>
+          <div style="margin-top:20px">
+            <h3 class="admin-card-title">ÚLTIMOS REGISTROS</h3>
+            <div id="recent-results" style="font-family:var(--font-cond);font-size:13px;color:var(--text-2);margin-top:8px;display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- MODAL: NOVO CAMPEONATO -->
+<div class="modal-backdrop" id="modal-backdrop" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">NOVO CAMPEONATO</span>
+      <button class="modal-close" id="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Nome do Campeonato *</label><input type="text" class="form-control" id="new-champ-name" placeholder="Ex: WZ Open Brasil 2026"/></div>
+      <div class="form-group"><label class="form-label">Temporada</label><input type="text" class="form-control" id="new-champ-season" placeholder="Ex: Season 1"/></div>
+      <div class="form-group"><label class="form-label">Modo de Jogo</label>
+        <select class="form-control" id="new-champ-mode">
+          <option value="resurgence">🔄 Ressurgência — Rebirth Island / Haven's Hollow</option>
+          <option value="br">💀 Battle Royale — Verdansk / Avalon</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Prize Pool</label><input type="text" class="form-control" id="new-champ-prize" placeholder="Ex: $10,000"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" id="modal-cancel">CANCELAR</button>
+      <button class="btn-primary" id="modal-confirm">CRIAR CAMPEONATO</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ===== FLOATING LIVE BUTTON ===== -->
+<div class="live-float" id="live-float" style="display:none">
+  <div class="live-float-glow"></div>
+  <a class="live-float-btn" id="live-float-link" href="#" target="_blank" rel="noopener">
+    <span class="live-float-dot"></span>
+    <span class="live-float-text">
+      <span class="live-float-label">AO VIVO AGORA</span>
+      <span class="live-float-sub">Assistir transmissão</span>
+    </span>
+    <svg class="live-float-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+  </a>
+</div>
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <span class="footer-logo" id="footer-name">WZ CHAMPIONSHIP MANAGER</span>
+    <span class="footer-copy">© 2026 — Sistema Multi-Campeonato Warzone</span>
+    <span class="footer-version">v4.0</span>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+// Render user pill in header
+(function(){
+  const usr = localStorage.getItem('wzc_user');
+  const el = document.getElementById('hdr-user-pill');
+  if (!el) return;
+  if (usr) {
+    const u = JSON.parse(usr);
+    el.innerHTML = `<div style="display:flex;align-items:center;gap:6px;background:rgba(255,106,0,0.1);border:1px solid rgba(255,106,0,0.2);border-radius:20px;padding:5px 12px;font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text-1)"><span style="width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block"></span>${u.nickname}</div>`;
+  }
+})();
+</script>
+</body>
+</html>

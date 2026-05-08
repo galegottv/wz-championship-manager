@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>WZ Championship — Início</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --orange:#ff6a00;--red:#ff2d55;--green:#00ff87;--gold:#ffd700;
+  --bg:#080a0f;--bg1:#0d1017;--bg2:#131820;--card:#111620;
+  --border:rgba(255,106,0,0.18);--text1:#f0f2f5;--text2:#8a96a8;--text3:#4a5568;
+  --font:'Barlow Condensed',sans-serif;--body:'Barlow',sans-serif;
+}
+body{background:var(--bg);color:var(--text1);font-family:var(--body);min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+
+/* HEADER */
+header{position:sticky;top:0;z-index:100;background:rgba(8,10,15,0.95);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:64px;gap:16px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo svg{width:36px;height:36px;filter:drop-shadow(0 0 8px var(--orange))}
+.logo-name{font-family:var(--font);font-size:18px;font-weight:900;letter-spacing:3px}
+.logo-sub{font-family:var(--font);font-size:8px;letter-spacing:4px;color:var(--orange);display:block}
+.nav-links{display:flex;align-items:center;gap:8px}
+.nav-link{font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--text2);padding:7px 12px;border-radius:6px;transition:.2s}
+.nav-link:hover{color:var(--orange);background:rgba(255,106,0,0.08)}
+.btn-login{background:linear-gradient(135deg,var(--orange),#cc5500);color:#fff;font-family:var(--font);font-size:12px;font-weight:900;letter-spacing:2px;padding:8px 18px;border-radius:6px;transition:.2s}
+.btn-login:hover{filter:brightness(1.15);box-shadow:0 0 16px rgba(255,106,0,0.4)}
+.user-pill{display:flex;align-items:center;gap:8px;background:rgba(255,106,0,0.1);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:1px}
+.user-dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+
+/* HERO */
+.hero{position:relative;overflow:hidden;padding:80px 0 60px;background:linear-gradient(135deg,#08090f 0%,#0f1520 60%,#0a0c14 100%)}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 80% at 50% 0%,rgba(255,106,0,0.1),transparent 60%)}
+.hero-content{position:relative;text-align:center;display:flex;flex-direction:column;align-items:center;gap:20px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,45,85,0.15);border:1px solid rgba(255,45,85,0.4);color:var(--red);font-family:var(--font);font-size:11px;font-weight:700;letter-spacing:3px;padding:5px 14px;border-radius:20px}
+.hero-dot{width:7px;height:7px;border-radius:50%;background:var(--red);animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.hero-title{font-family:var(--font);font-size:clamp(36px,7vw,80px);font-weight:900;letter-spacing:4px;line-height:1}
+.hero-title span{color:var(--orange)}
+.hero-sub{font-family:var(--font);font-size:16px;font-weight:600;letter-spacing:2px;color:var(--text2);max-width:500px}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.btn-cta{font-family:var(--font);font-size:14px;font-weight:900;letter-spacing:2px;padding:14px 32px;border-radius:8px;transition:.2s;cursor:pointer;border:none}
+.btn-cta-primary{background:linear-gradient(135deg,var(--orange),#cc5500);color:#fff}
+.btn-cta-primary:hover{filter:brightness(1.15);box-shadow:0 0 28px rgba(255,106,0,0.5)}
+.btn-cta-secondary{background:transparent;border:1px solid var(--border);color:var(--text1)}
+.btn-cta-secondary:hover{border-color:var(--orange);color:var(--orange)}
+
+/* SECTION */
+.section{padding:56px 0}
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.section-title{font-family:var(--font);font-size:22px;font-weight:900;letter-spacing:3px;display:flex;align-items:center;gap:10px}
+.section-title::before{content:'';width:4px;height:22px;background:var(--orange);border-radius:2px;display:inline-block}
+.see-all{font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:2px;color:var(--orange);cursor:pointer}
+
+/* CHAMP CARDS */
+.champs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+.champ-card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:.25s;cursor:pointer}
+.champ-card:hover{border-color:rgba(255,106,0,0.5);transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,0.4)}
+.champ-card-banner{height:120px;background:linear-gradient(135deg,#0f1520,#1a2030);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.champ-card-banner img{width:100%;height:100%;object-fit:cover;opacity:.5}
+.champ-card-banner-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent,rgba(8,10,15,.8))}
+.champ-card-live{position:absolute;top:10px;left:10px;display:flex;align-items:center;gap:6px;background:rgba(255,45,85,0.2);border:1px solid rgba(255,45,85,0.5);color:var(--red);font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:2px;padding:3px 10px;border-radius:20px}
+.champ-card-soon{position:absolute;top:10px;left:10px;background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.4);color:var(--gold);font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:2px;padding:3px 10px;border-radius:20px}
+.champ-card-body{padding:16px}
+.champ-card-name{font-family:var(--font);font-size:18px;font-weight:900;letter-spacing:2px;margin-bottom:4px}
+.champ-card-meta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.meta-item{font-family:var(--font);font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text2);display:flex;align-items:center;gap:4px}
+.champ-card-stats{display:flex;gap:16px;border-top:1px solid rgba(255,255,255,.06);padding-top:12px}
+.cs-item{display:flex;flex-direction:column;gap:2px}
+.cs-val{font-family:var(--font);font-size:18px;font-weight:900;color:var(--orange)}
+.cs-lbl{font-family:var(--font);font-size:9px;font-weight:700;letter-spacing:2px;color:var(--text3)}
+.champ-card-btn{margin-left:auto;background:rgba(255,106,0,0.1);border:1px solid var(--border);color:var(--orange);font-family:var(--font);font-size:11px;font-weight:800;letter-spacing:2px;padding:6px 14px;border-radius:6px;cursor:pointer;transition:.2s;align-self:flex-end}
+.champ-card-btn:hover{background:rgba(255,106,0,0.25)}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3);font-family:var(--font);font-size:16px;letter-spacing:2px}
+
+/* PLANS */
+.plans-section{padding:64px 0;background:linear-gradient(180deg,var(--bg) 0%,var(--bg1) 100%)}
+.plans-title{text-align:center;margin-bottom:12px}
+.plans-title h2{font-family:var(--font);font-size:clamp(24px,4vw,44px);font-weight:900;letter-spacing:3px}
+.plans-title h2 span{color:var(--orange)}
+.plans-sub{font-family:var(--font);font-size:14px;letter-spacing:1px;color:var(--text2);text-align:center;margin-bottom:48px}
+.plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:900px;margin:0 auto}
+.plan-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:32px 28px;display:flex;flex-direction:column;gap:20px;position:relative;transition:.25s}
+.plan-card.highlight{border-color:var(--orange);background:linear-gradient(180deg,rgba(255,106,0,0.08),var(--card))}
+.plan-card.highlight::before{content:'MAIS POPULAR';position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--orange);color:#000;font-family:var(--font);font-size:10px;font-weight:900;letter-spacing:2px;padding:4px 16px;border-radius:20px}
+.plan-name{font-family:var(--font);font-size:14px;font-weight:800;letter-spacing:4px;color:var(--orange)}
+.plan-price{font-family:var(--font);font-size:42px;font-weight:900;line-height:1}
+.plan-price sup{font-size:18px;vertical-align:super}
+.plan-price span{font-size:14px;color:var(--text2);font-weight:600}
+.plan-features{display:flex;flex-direction:column;gap:10px;flex:1}
+.feat{display:flex;align-items:center;gap:10px;font-family:var(--font);font-size:13px;font-weight:600;letter-spacing:.5px;color:var(--text2)}
+.feat.ok{color:var(--text1)}
+.feat-icon{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+.feat-icon.yes{background:rgba(0,255,135,.15);color:var(--green)}
+.feat-icon.no{background:rgba(255,255,255,.05);color:var(--text3)}
+.btn-plan{font-family:var(--font);font-size:13px;font-weight:900;letter-spacing:2px;padding:13px;border-radius:8px;border:none;cursor:pointer;transition:.2s;text-align:center;display:block}
+.btn-plan-free{background:var(--bg2);color:var(--text1);border:1px solid var(--border)}
+.btn-plan-free:hover{border-color:var(--orange);color:var(--orange)}
+.btn-plan-paid{background:linear-gradient(135deg,var(--orange),#cc5500);color:#fff}
+.btn-plan-paid:hover{filter:brightness(1.15);box-shadow:0 0 20px rgba(255,106,0,0.4)}
+
+/* FOOTER */
+footer{background:var(--bg1);border-top:1px solid var(--border);padding:32px 0;margin-top:40px}
+.footer-inner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.footer-logo{font-family:var(--font);font-size:14px;font-weight:900;letter-spacing:4px;color:var(--orange)}
+.footer-copy{font-size:12px;color:var(--text3)}
+
+@media(max-width:768px){.plans-grid{grid-template-columns:1fr}.champs-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container header-inner">
+    <a class="logo" href="home.html">
+      <svg viewBox="0 0 60 60" fill="none">
+        <polygon points="30,2 56,16 56,44 30,58 4,44 4,16" stroke="#ff6a00" stroke-width="2" fill="none"/>
+        <circle cx="30" cy="30" r="12" stroke="#ff6a00" stroke-width="1.5" fill="none"/>
+        <line x1="30" y1="18" x2="30" y2="42" stroke="#ff6a00" stroke-width="1.5"/>
+        <line x1="18" y1="30" x2="42" y2="30" stroke="#ff6a00" stroke-width="1.5"/>
+        <circle cx="30" cy="30" r="3" fill="#ff6a00"/>
+      </svg>
+      <div><span class="logo-name">WZ CHAMPIONSHIP</span><span class="logo-sub">TOURNAMENT SYSTEM</span></div>
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="home.html">INÍCIO</a>
+      <a class="nav-link" href="#plans">PLANOS</a>
+      <div id="header-auth"></div>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container hero-content">
+    <div class="hero-badge"><span class="hero-dot"></span>WARZONE BO7 — SEASON 3</div>
+    <h1 class="hero-title">WZ <span>CHAMPIONSHIP</span><br>MANAGER</h1>
+    <p class="hero-sub">Sistema completo de campeonatos Warzone — standings ao vivo, overlay para stream e muito mais</p>
+    <div class="hero-cta">
+      <a href="login.html" class="btn-cta btn-cta-primary">ENTRAR / CADASTRAR</a>
+      <a href="#live" class="btn-cta btn-cta-secondary">VER AO VIVO</a>
+    </div>
+  </div>
+</section>
+
+<!-- AO VIVO -->
+<section class="section" id="live">
+  <div class="container">
+    <div class="section-hdr">
+      <div class="section-title">🔴 AO VIVO AGORA</div>
+    </div>
+    <div class="champs-grid" id="live-grid">
+      <div class="empty-state">Nenhum campeonato ao vivo no momento</div>
+    </div>
+  </div>
+</section>
+
+<!-- PRÓXIMOS -->
+<section class="section" style="padding-top:0" id="upcoming">
+  <div class="container">
+    <div class="section-hdr">
+      <div class="section-title">📅 PRÓXIMOS CAMPEONATOS</div>
+    </div>
+    <div class="champs-grid" id="upcoming-grid">
+      <div class="empty-state">Nenhum campeonato agendado</div>
+    </div>
+  </div>
+</section>
+
+<!-- PLANS -->
+<section class="plans-section" id="plans">
+  <div class="container">
+    <div class="plans-title">
+      <h2>ESCOLHA SEU <span>PLANO</span></h2>
+    </div>
+    <p class="plans-sub">Gerencie campeonatos profissionais, transmita ao vivo e muito mais</p>
+    <div class="plans-grid">
+
+      <div class="plan-card">
+        <div class="plan-name">FREE</div>
+        <div class="plan-price"><sup>R$</sup>0<span>/mês</span></div>
+        <div class="plan-features">
+          <div class="feat ok"><span class="feat-icon yes">✓</span>Ver standings públicos</div>
+          <div class="feat ok"><span class="feat-icon yes">✓</span>Acompanhar campeonatos</div>
+          <div class="feat"><span class="feat-icon no">✕</span>Criar campeonatos</div>
+          <div class="feat"><span class="feat-icon no">✕</span>Overlay para live</div>
+          <div class="feat"><span class="feat-icon no">✕</span>Link AO VIVO</div>
+        </div>
+        <a href="login.html" class="btn-plan btn-plan-free">COMEÇAR GRÁTIS</a>
+      </div>
+
+      <div class="plan-card highlight">
+        <div class="plan-name">PRO</div>
+        <div class="plan-price"><sup>R$</sup>29<span>/mês</span></div>
+        <div class="plan-features">
+          <div class="feat ok"><span class="feat-icon yes">✓</span>Ver standings públicos</div>
+          <div class="feat ok"><span class="feat-icon yes">✓</span>Criar campeonatos</div>
+          <div class="feat ok"><span class="feat-icon yes">✓</span>Overlay para live (OBS)</div>
+          <div class="feat ok"><span class="feat-icon yes">✓</span>Botão AO VIVO com link</div>
+          <div class="feat"><span class="feat-icon no">✕</span>Múltiplos campeonatos</div>
+        </div>
+        <a href="login.html?plan=pro" class="btn-plan btn-plan-paid">ASSINAR PRO</a>
+      </div>
+
+      <div class="plan-card">
+        <div class="plan-name">ELITE</div>
+        <div class="plan-price"><sup>R$</sup>79<span>/mês</span></div>
+        <div class="plan-features">
+          <div class="feat ok"><span class="feat-icon yes">✓</span>Tudo do PRO</div>
+          <div class="feat ok"><span class="feat-icon yes">✓</span>Campeonatos ilimitados</div>
+          <div class="feat ok"><span class="feat-icon yes">✓</span>Overlay premium</div>
+          <div class="feat ok"><span class="feat-icon yes">✓</span>Suporte prioritário</div>
+          <div class="feat ok"><span class="feat-icon yes">✓</span>Badge verificado</div>
+        </div>
+        <a href="login.html?plan=elite" class="btn-plan btn-plan-paid">ASSINAR ELITE</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container footer-inner">
+    <span class="footer-logo">WZ CHAMPIONSHIP</span>
+    <span class="footer-copy">© 2026 — Warzone BO7 Season 3</span>
+    <a href="login.html" style="font-family:var(--font);font-size:12px;color:var(--orange);letter-spacing:2px">ENTRAR →</a>
+  </div>
+</footer>
+
+<script>
+const API = 'http://localhost:3333/api';
+const LS_KEY = 'wzc_v3';
+
+// Header auth state
+function renderHeaderAuth() {
+  const usr = localStorage.getItem('wzc_user');
+  const el = document.getElementById('header-auth');
+  if (usr) {
+    const u = JSON.parse(usr);
+    el.innerHTML = `
+      <a href="index.html" style="display:flex;align-items:center;gap:6px;font-family:var(--font);font-size:12px;font-weight:800;letter-spacing:2px;color:#fff;background:linear-gradient(135deg,var(--orange),#cc5500);padding:8px 16px;border-radius:6px;text-decoration:none;transition:.2s" onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter=''">\ud83c\udfc6 MEUS TORNEIOS</a>
+      <div class="user-pill"><span class="user-dot"></span>${u.nickname}</div>`;
+  } else {
+    el.innerHTML = `<a href="login.html" class="btn-login">ENTRAR</a>`;
+  }
+}
+
+// Load championships from localStorage (shared with index.html)
+function loadChampionships() {
+  const liveGrid = document.getElementById('live-grid');
+  const upGrid = document.getElementById('upcoming-grid');
+
+  // Read from localStorage (same key as tournament manager)
+  const raw = localStorage.getItem(LS_KEY);
+  let champ = null;
+  try { champ = raw ? JSON.parse(raw) : null; } catch {}
+
+  const liveCards = [];
+  const upCards = [];
+
+  if (champ && champ.name) {
+    const card = buildCard(champ);
+    if (champ.isLive) liveCards.push(card);
+    else upCards.push(card);
+  }
+
+  // Also try server
+  fetch(`${API}/admin/stats`).catch(() => {});
+
+  if (liveCards.length) liveGrid.innerHTML = liveCards.join('');
+  if (upCards.length) upGrid.innerHTML = upCards.join('');
+}
+
+function buildCard(c) {
+  const teams = c.teams?.length || 0;
+  const matches = c.matches?.length || 0;
+  const done = c.matches?.filter(m => m.status === 'done').length || 0;
+  const modeLabel = c.mode === 'resurgence' ? '🔄 Resurgência' : '💀 Battle Royale';
+  const statusBadge = c.isLive
+    ? `<div class="champ-card-live"><span style="width:6px;height:6px;border-radius:50%;background:var(--red);display:inline-block;animation:pulse 1s infinite"></span>AO VIVO</div>`
+    : `<div class="champ-card-soon">📅 EM BREVE</div>`;
+  const liveBtn = c.isLive && c.liveUrl
+    ? `<a href="${c.liveUrl}" target="_blank" class="champ-card-btn" style="background:rgba(255,45,85,.15);border-color:rgba(255,45,85,.4);color:var(--red)">▶ ASSISTIR</a>`
+    : `<a href="index.html" class="champ-card-btn">VER STANDINGS</a>`;
+
+  return `<div class="champ-card">
+    <div class="champ-card-banner">
+      <div class="champ-card-banner-overlay"></div>
+      ${statusBadge}
+    </div>
+    <div class="champ-card-body">
+      <div class="champ-card-name">${c.name}</div>
+      <div class="champ-card-meta">
+        <span class="meta-item">${modeLabel}</span>
+        <span class="meta-item">📌 ${c.season || ''}</span>
+        ${c.prize ? `<span class="meta-item">🏆 ${c.prize}</span>` : ''}
+      </div>
+      <div class="champ-card-stats">
+        <div class="cs-item"><span class="cs-val">${teams}</span><span class="cs-lbl">TIMES</span></div>
+        <div class="cs-item"><span class="cs-val">${done}</span><span class="cs-lbl">PARTIDAS</span></div>
+        <div class="cs-item"><span class="cs-val">${c.groups?.length||0}</span><span class="cs-lbl">GRUPOS</span></div>
+        ${liveBtn}
+      </div>
+    </div>
+  </div>`;
+}
+
+renderHeaderAuth();
+loadChampionships();
+</script>
+</body>
+</html>

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>WZ Championship — Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --orange:#ff6a00;--red:#ff2d55;--green:#00ff87;
+  --bg:#080a0f;--bg1:#0d1017;--bg2:#131820;--card:#111620;
+  --border:rgba(255,106,0,0.2);--text1:#f0f2f5;--text2:#8a96a8;--text3:#4a5568;
+  --font:'Barlow Condensed',sans-serif;--body:'Barlow',sans-serif;
+}
+body{background:var(--bg);color:var(--text1);font-family:var(--body);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(255,106,0,0.08),transparent 60%);pointer-events:none}
+
+.back-link{position:fixed;top:20px;left:20px;color:var(--text2);font-family:var(--font);font-size:13px;letter-spacing:2px;text-decoration:none;display:flex;align-items:center;gap:6px;transition:.2s}
+.back-link:hover{color:var(--orange)}
+
+.logo{display:flex;align-items:center;gap:12px;margin-bottom:36px}
+.logo svg{width:44px;height:44px;filter:drop-shadow(0 0 10px var(--orange))}
+.logo-text{display:flex;flex-direction:column}
+.logo-title{font-family:var(--font);font-size:22px;font-weight:900;letter-spacing:3px}
+.logo-sub{font-family:var(--font);font-size:10px;letter-spacing:4px;color:var(--orange)}
+
+.auth-box{background:var(--card);border:1px solid var(--border);border-radius:12px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.6)}
+.tabs{display:flex;border-bottom:1px solid var(--border)}
+.tab-btn{flex:1;font-family:var(--font);font-size:14px;font-weight:800;letter-spacing:2px;padding:16px;background:none;border:none;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:.2s;margin-bottom:-1px}
+.tab-btn.active{color:var(--orange);border-bottom-color:var(--orange);background:rgba(255,106,0,0.05)}
+
+.tab-content{display:none;padding:28px;flex-direction:column;gap:16px}
+.tab-content.active{display:flex}
+
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-label{font-family:var(--font);font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text2)}
+.form-input{background:var(--bg2);border:1px solid rgba(255,255,255,0.08);color:var(--text1);font-family:var(--body);font-size:14px;padding:11px 14px;border-radius:6px;width:100%;transition:.2s;outline:none}
+.form-input:focus{border-color:var(--orange)}
+.form-input::placeholder{color:var(--text3)}
+
+.btn-submit{background:linear-gradient(135deg,var(--orange),#cc5500);color:#fff;font-family:var(--font);font-size:14px;font-weight:900;letter-spacing:2px;padding:13px;border-radius:6px;border:none;cursor:pointer;transition:.2s;width:100%;margin-top:4px}
+.btn-submit:hover{filter:brightness(1.15);box-shadow:0 0 24px rgba(255,106,0,0.4)}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed}
+
+.msg{font-family:var(--font);font-size:13px;letter-spacing:1px;padding:10px 14px;border-radius:6px;display:none}
+.msg.ok{background:rgba(0,255,135,0.1);border:1px solid rgba(0,255,135,0.3);color:var(--green);display:block}
+.msg.err{background:rgba(255,45,85,0.1);border:1px solid rgba(255,45,85,0.3);color:var(--red);display:block}
+
+.divider{display:flex;align-items:center;gap:12px;color:var(--text3);font-size:12px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.06)}
+
+.plan-note{font-family:var(--font);font-size:11px;letter-spacing:1px;color:var(--text3);text-align:center}
+.plan-note a{color:var(--orange);text-decoration:none}
+
+/* Payment Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal-card{background:var(--card);border:1px solid var(--border);border-radius:12px;width:100%;max-width:440px;padding:28px;display:flex;flex-direction:column;gap:18px}
+.modal-title{font-family:var(--font);font-size:20px;font-weight:900;letter-spacing:2px;color:var(--orange)}
+.modal-close{background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;align-self:flex-end;margin-top:-8px;margin-bottom:-8px}
+.payment-methods{display:flex;flex-direction:column;gap:10px}
+.pay-btn{display:flex;align-items:center;gap:12px;padding:14px 18px;background:var(--bg2);border:1px solid rgba(255,255,255,0.08);border-radius:8px;cursor:pointer;transition:.2s;color:var(--text1);font-family:var(--font);font-size:14px;font-weight:700;letter-spacing:1px}
+.pay-btn:hover{border-color:var(--orange);background:rgba(255,106,0,0.08)}
+.pay-icon{font-size:22px}
+.pix-qr{text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
+.pix-qr img{width:200px;height:200px;border-radius:8px;border:2px solid var(--green)}
+.pix-copy{background:rgba(0,255,135,0.1);border:1px solid rgba(0,255,135,0.3);color:var(--green);font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:1px;padding:8px 16px;border-radius:6px;cursor:pointer;transition:.2s}
+.pix-copy:hover{background:rgba(0,255,135,0.2)}
+
+/* Plans preview */
+.plans-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
+.plan-card{background:var(--bg2);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:14px;text-align:center;cursor:pointer;transition:.2s;position:relative}
+.plan-card:hover,.plan-card.selected{border-color:var(--orange);background:rgba(255,106,0,0.08)}
+.plan-card.popular::before{content:'POPULAR';position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--orange);color:#000;font-family:var(--font);font-size:9px;font-weight:900;letter-spacing:2px;padding:2px 10px;border-radius:20px}
+.plan-name{font-family:var(--font);font-size:16px;font-weight:900;letter-spacing:2px;color:var(--orange)}
+.plan-price{font-family:var(--font);font-size:13px;font-weight:700;color:var(--text1);margin-top:4px}
+.plan-price span{font-size:10px;color:var(--text2)}
+
+@media(max-width:480px){.plans-preview{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<a class="back-link" href="home.html">← INÍCIO</a>
+
+<div class="logo">
+  <svg viewBox="0 0 60 60" fill="none">
+    <polygon points="30,2 56,16 56,44 30,58 4,44 4,16" fill="none" stroke="#ff6a00" stroke-width="2"/>
+    <circle cx="30" cy="30" r="12" fill="none" stroke="#ff6a00" stroke-width="1.5"/>
+    <line x1="30" y1="18" x2="30" y2="42" stroke="#ff6a00" stroke-width="1.5"/>
+    <line x1="18" y1="30" x2="42" y2="30" stroke="#ff6a00" stroke-width="1.5"/>
+    <circle cx="30" cy="30" r="3" fill="#ff6a00"/>
+  </svg>
+  <div class="logo-text">
+    <span class="logo-title">WZ CHAMPIONSHIP</span>
+    <span class="logo-sub">TOURNAMENT SYSTEM</span>
+  </div>
+</div>
+
+<div class="auth-box">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('login')">ENTRAR</button>
+    <button class="tab-btn" onclick="switchTab('register')">CADASTRAR</button>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="tab-content active" id="tab-login">
+    <div class="form-group">
+      <label class="form-label">EMAIL</label>
+      <input class="form-input" id="login-email" type="email" placeholder="seu@email.com" autocomplete="email"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">SENHA</label>
+      <input class="form-input" id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <div class="msg" id="login-msg"></div>
+    <button class="btn-submit" id="btn-login" onclick="doLogin()">ENTRAR</button>
+    <p class="plan-note">Não tem conta? <a href="#" onclick="switchTab('register')">Cadastre-se grátis</a></p>
+  </div>
+
+  <!-- REGISTER -->
+  <div class="tab-content" id="tab-register">
+    <div class="form-group">
+      <label class="form-label">NICKNAME</label>
+      <input class="form-input" id="reg-nick" type="text" placeholder="SeuNick" maxlength="20"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">EMAIL</label>
+      <input class="form-input" id="reg-email" type="email" placeholder="seu@email.com"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">SENHA</label>
+      <input class="form-input" id="reg-pass" type="password" placeholder="Mínimo 6 caracteres"/>
+    </div>
+    <div class="divider">ESCOLHA SEU PLANO</div>
+    <div class="plans-preview">
+      <div class="plan-card selected" data-plan="free" onclick="selectPlan('free')">
+        <div class="plan-name">FREE</div>
+        <div class="plan-price">R$0<span>/mês</span></div>
+      </div>
+      <div class="plan-card popular" data-plan="pro" onclick="selectPlan('pro')">
+        <div class="plan-name">PRO</div>
+        <div class="plan-price">R$29<span>/mês</span></div>
+      </div>
+      <div class="plan-card" data-plan="elite" onclick="selectPlan('elite')">
+        <div class="plan-name">ELITE</div>
+        <div class="plan-price">R$79<span>/mês</span></div>
+      </div>
+    </div>
+    <div class="msg" id="reg-msg"></div>
+    <button class="btn-submit" id="btn-register" onclick="doRegister()">CRIAR CONTA</button>
+    <p class="plan-note">Ao cadastrar você concorda com os termos de uso.</p>
+  </div>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div class="modal-bg" id="payment-modal">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closePayModal()">✕</button>
+    <div class="modal-title" id="pay-modal-title">ASSINAR PLANO</div>
+    <div id="pay-modal-body">
+      <p style="font-family:var(--font);color:var(--text2);font-size:13px;letter-spacing:1px;margin-bottom:16px" id="pay-plan-desc"></p>
+      <div class="payment-methods">
+        <button class="pay-btn" onclick="payStripe()"><span class="pay-icon">💳</span>Cartão de Crédito (Stripe)</button>
+        <button class="pay-btn" onclick="payPix()"><span class="pay-icon">🟢</span>PIX (MercadoPago)</button>
+      </div>
+    </div>
+    <div id="pix-qr-section" style="display:none" class="pix-qr">
+      <p style="font-family:var(--font);font-size:13px;color:var(--text2)">Escaneie o QR Code ou copie o código PIX:</p>
+      <img id="pix-qr-img" src="" alt="QR Code PIX"/>
+      <button class="pix-copy" onclick="copyPix()">📋 COPIAR CÓDIGO PIX</button>
+      <p style="font-family:var(--font);font-size:11px;color:var(--text3)" id="pix-status-msg">Aguardando pagamento...</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:3333/api';
+let selectedPlan = 'free';
+let pixPaymentId = null;
+let pixCode = null;
+let pixPollInterval = null;
+
+function switchTab(t) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&t==='login')||(i===1&&t==='register')));
+  document.getElementById('tab-login').classList.toggle('active', t==='login');
+  document.getElementById('tab-register').classList.toggle('active', t==='register');
+}
+
+function selectPlan(p) {
+  selectedPlan = p;
+  document.querySelectorAll('.plan-card').forEach(c => c.classList.toggle('selected', c.dataset.plan===p));
+}
+
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text; el.className = `msg ${type}`;
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-pass').value;
+  if (!email||!password) return showMsg('login-msg','Preencha todos os campos','err');
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.textContent = 'ENTRANDO...';
+  try {
+    const r = await fetch(`${API}/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+    const d = await r.json();
+    if (!r.ok) { showMsg('login-msg', d.error,'err'); btn.disabled=false; btn.textContent='ENTRAR'; return; }
+    localStorage.setItem('wzc_token', d.token);
+    localStorage.setItem('wzc_user', JSON.stringify(d.user));
+    showMsg('login-msg','Login realizado! Redirecionando...','ok');
+    setTimeout(() => { window.location.href = d.user.role==='admin' ? 'index.html' : 'index.html'; }, 800);
+  } catch(e) {
+    showMsg('login-msg','Servidor offline. Usando modo local.','err');
+    // Fallback local
+    localLogin(email, password);
+    btn.disabled=false; btn.textContent='ENTRAR';
+  }
+}
+
+function localLogin(email, pass) {
+  // Demo local: admin
+  if (email==='admin@wzchamp.gg' && pass==='wzchamp2026') {
+    const u = {id:'admin-001',nickname:'Admin',email,role:'admin',plan:'elite'};
+    localStorage.setItem('wzc_token','local_admin_token');
+    localStorage.setItem('wzc_user',JSON.stringify(u));
+    showMsg('login-msg','Login local (modo offline). Redirecionando...','ok');
+    setTimeout(() => window.location.href='index.html', 800);
+  } else {
+    showMsg('login-msg','Servidor offline. Credenciais inválidas para modo local.','err');
+  }
+}
+
+async function doRegister() {
+  const nickname = document.getElementById('reg-nick').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-pass').value;
+  if (!nickname||!email||!password) return showMsg('reg-msg','Preencha todos os campos','err');
+  const btn = document.getElementById('btn-register');
+  btn.disabled=true; btn.textContent='CRIANDO...';
+  try {
+    const r = await fetch(`${API}/auth/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nickname,email,password})});
+    const d = await r.json();
+    if (!r.ok) { showMsg('reg-msg',d.error,'err'); btn.disabled=false; btn.textContent='CRIAR CONTA'; return; }
+    showMsg('reg-msg','✓ Conta criada! Aguardando aprovação do Admin.','ok');
+    btn.textContent='CONTA CRIADA!';
+    if (selectedPlan !== 'free') {
+      setTimeout(() => openPayModal(selectedPlan), 1500);
+    }
+  } catch(e) {
+    showMsg('reg-msg','Servidor offline. Tente quando o servidor estiver rodando.','err');
+    btn.disabled=false; btn.textContent='CRIAR CONTA';
+  }
+}
+
+function openPayModal(plan) {
+  const names = {pro:'PRO — R$29/mês',elite:'ELITE — R$79/mês'};
+  document.getElementById('pay-modal-title').textContent = 'ASSINAR PLANO ' + plan.toUpperCase();
+  document.getElementById('pay-plan-desc').textContent = `Você escolheu o plano ${names[plan]}. Escolha a forma de pagamento:`;
+  document.getElementById('pix-qr-section').style.display='none';
+  document.getElementById('pay-modal-body').style.display='block';
+  document.getElementById('payment-modal').classList.add('open');
+  selectedPlan = plan;
+}
+function closePayModal() {
+  document.getElementById('payment-modal').classList.remove('open');
+  if (pixPollInterval) clearInterval(pixPollInterval);
+}
+
+async function payStripe() {
+  const token = localStorage.getItem('wzc_token');
+  if (!token) return alert('Faça login primeiro!');
+  try {
+    const r = await fetch(`${API}/payments/stripe/create-session`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({plan:selectedPlan})});
+    const d = await r.json();
+    if (d.url) window.location.href = d.url;
+    else alert('Erro: '+d.error);
+  } catch { alert('Servidor offline.'); }
+}
+
+async function payPix() {
+  const token = localStorage.getItem('wzc_token');
+  if (!token) return alert('Faça login primeiro!');
+  try {
+    const r = await fetch(`${API}/payments/pix/create`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({plan:selectedPlan})});
+    const d = await r.json();
+    if (!r.ok) return alert('Erro: '+d.error);
+    pixPaymentId = d.paymentId;
+    pixCode = d.qr_code;
+    document.getElementById('pay-modal-body').style.display='none';
+    document.getElementById('pix-qr-section').style.display='flex';
+    if (d.qr_code_base64) document.getElementById('pix-qr-img').src=`data:image/png;base64,${d.qr_code_base64}`;
+    // Poll for payment confirmation
+    pixPollInterval = setInterval(pollPixStatus, 5000);
+  } catch { alert('Servidor offline.'); }
+}
+
+async function pollPixStatus() {
+  const token = localStorage.getItem('wzc_token');
+  try {
+    const r = await fetch(`${API}/payments/pix/status/${pixPaymentId}`,{headers:{'Authorization':'Bearer '+token}});
+    const d = await r.json();
+    if (d.status === 'approved') {
+      clearInterval(pixPollInterval);
+      document.getElementById('pix-status-msg').textContent='✓ Pagamento confirmado! Redirecionando...';
+      setTimeout(() => { closePayModal(); window.location.href='index.html'; }, 2000);
+    }
+  } catch {}
+}
+
+function copyPix() {
+  if (pixCode) { navigator.clipboard.writeText(pixCode); alert('Código PIX copiado!'); }
+}
+
+// Enter key
+document.addEventListener('keydown', e => {
+  if (e.key==='Enter') {
+    if (document.getElementById('tab-login').classList.contains('active')) doLogin();
+    else doRegister();
+  }
+});
+
+// Auto-redirect if already logged in
+const tok = localStorage.getItem('wzc_token');
+const usr = localStorage.getItem('wzc_user');
+if (tok && usr) {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('payment')==='success') {
+    const plan = params.get('plan');
+    showMsg('login-msg',`✓ Plano ${plan?.toUpperCase()} ativado! Bem-vindo!`,'ok');
+  } else {
+    window.location.href='index.html';
+  }
+}
+</script>
+</body>
+</html>
