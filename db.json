@@ -4,7 +4,7 @@
       "id": "admin-001",
       "nickname": "Admin",
       "email": "admin@wzchamp.gg",
-      "passwordHash": "$2a$10$rQ3LtB1vMkQ2YZs1sY1TOuAdRpMm0sBVCGi3Xb2.XFaAWYpJl0Tm6",
+      "passwordHash": "$2a$10$coWKJQgwh4obsAJRD18yYezFk5XuhQ9IhBPBKUAmNYOnIrb8Gllum",
       "role": "admin",
       "plan": "elite",
       "status": "active",

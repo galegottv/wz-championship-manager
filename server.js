@@ -282,6 +282,23 @@ app.get('/api/payments/pix/status/:paymentId', authMiddleware, async (req, res) 
 
 // ──────────────────────────────────────────────────────
 app.get('/api/plans', (req, res) => res.json(PLANS));
+
+// Seed admin if not exists (safe to call multiple times)
+app.post('/api/setup', async (req, res) => {
+  try {
+    const existing = await db.findUser({ id:'admin-001' });
+    if (existing) return res.json({ message:'Admin já existe', email:'admin@wzchamp.gg' });
+    const hash = await bcrypt.hash('wzchamp2026', 10);
+    await db.createUser({
+      id:'admin-001', nickname:'Admin', email:'admin@wzchamp.gg',
+      passwordHash:hash, role:'admin', plan:'elite', status:'active',
+      createdAt:new Date().toISOString(),
+      stripeCustomerId:null, subscriptionId:null, subscriptionExpiry:null,
+    });
+    res.json({ message:'Admin criado!', email:'admin@wzchamp.gg', password:'wzchamp2026' });
+  } catch(e) { res.status(500).json({ error:e.message }); }
+});
+
 // Root always → home.html
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
 // Any other non-API path → serve the .html file or fallback to home.html
