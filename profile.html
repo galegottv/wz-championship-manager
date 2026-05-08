@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Minha Conta — WZ Championship</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script>
+  // Auth guard
+  (function(){
+    const raw = localStorage.getItem('wzc_user');
+    if (!raw) { window.location.replace('login.html'); }
+  })();
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --orange:#ff6a00;--red:#ff2d55;--green:#00ff87;--gold:#ffd700;
+  --bg:#080a0f;--bg1:#0d1017;--bg2:#131820;--card:#111620;
+  --border:rgba(255,106,0,0.18);--border2:rgba(255,255,255,0.06);
+  --text1:#f0f2f5;--text2:#8a96a8;--text3:#4a5568;
+  --font:'Barlow Condensed',sans-serif;--body:'Barlow',sans-serif;
+}
+body{background:var(--bg);color:var(--text1);font-family:var(--body);min-height:100vh}
+a{text-decoration:none;color:inherit}
+.container{max-width:820px;margin:0 auto;padding:0 24px}
+
+/* HEADER */
+header{position:sticky;top:0;z-index:100;background:rgba(8,10,15,0.96);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:64px;gap:16px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo svg{width:32px;height:32px;filter:drop-shadow(0 0 8px var(--orange))}
+.logo-name{font-family:var(--font);font-size:17px;font-weight:900;letter-spacing:3px}
+.logo-sub{font-family:var(--font);font-size:8px;letter-spacing:4px;color:var(--orange);display:block}
+.nav-links{display:flex;align-items:center;gap:8px}
+.nav-link{font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--text2);padding:7px 12px;border-radius:6px;transition:.2s;white-space:nowrap}
+.nav-link:hover{color:var(--orange);background:rgba(255,106,0,0.08)}
+.user-pill{display:flex;align-items:center;gap:8px;background:rgba(255,106,0,0.1);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:1px}
+.user-dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+
+/* PAGE */
+.page{padding:48px 0 80px}
+.page-title{font-family:var(--font);font-size:32px;font-weight:900;letter-spacing:4px;margin-bottom:6px}
+.page-title span{color:var(--orange)}
+.page-sub{font-family:var(--font);font-size:13px;letter-spacing:1.5px;color:var(--text2);margin-bottom:36px}
+
+/* CARD */
+.profile-card{background:var(--card);border:1px solid var(--border2);border-radius:14px;padding:32px;margin-bottom:24px}
+.card-section-title{font-family:var(--font);font-size:14px;font-weight:800;letter-spacing:3px;color:var(--orange);margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.card-section-title::before{content:'';width:3px;height:16px;background:var(--orange);border-radius:2px;display:inline-block}
+
+/* INFO GRID */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.info-item{display:flex;flex-direction:column;gap:4px}
+.info-label{font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text3)}
+.info-value{font-family:var(--font);font-size:15px;font-weight:700;letter-spacing:1px;color:var(--text1)}
+.plan-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:20px;font-family:var(--font);font-size:12px;font-weight:800;letter-spacing:2px}
+.plan-free{background:rgba(255,255,255,.07);color:var(--text2);border:1px solid var(--border2)}
+.plan-pro{background:rgba(255,106,0,0.15);color:var(--orange);border:1px solid rgba(255,106,0,0.3)}
+.plan-elite{background:rgba(255,215,0,0.12);color:var(--gold);border:1px solid rgba(255,215,0,0.3)}
+
+/* FORM */
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.form-label{font-family:var(--font);font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text3)}
+.form-input{background:var(--bg2);border:1px solid var(--border2);color:var(--text1);font-family:var(--body);font-size:14px;padding:11px 14px;border-radius:8px;outline:none;transition:.2s;width:100%}
+.form-input:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,106,0,0.12)}
+.form-input::placeholder{color:var(--text3)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.btn-save{background:linear-gradient(135deg,var(--orange),#cc5500);color:#fff;font-family:var(--font);font-size:13px;font-weight:900;letter-spacing:2px;padding:12px 28px;border-radius:8px;border:none;cursor:pointer;transition:.2s}
+.btn-save:hover{filter:brightness(1.15);box-shadow:0 0 20px rgba(255,106,0,0.4)}
+.btn-danger{background:rgba(255,45,85,0.1);color:var(--red);border:1px solid rgba(255,45,85,0.3);font-family:var(--font);font-size:13px;font-weight:900;letter-spacing:2px;padding:12px 28px;border-radius:8px;cursor:pointer;transition:.2s}
+.btn-danger:hover{background:rgba(255,45,85,0.2)}
+
+/* FEEDBACK */
+.feedback{font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:1px;padding:10px 14px;border-radius:6px;margin-top:12px;display:none}
+.feedback.ok{display:block;background:rgba(0,255,135,0.1);color:var(--green);border:1px solid rgba(0,255,135,0.2)}
+.feedback.err{display:block;background:rgba(255,45,85,0.1);color:var(--red);border:1px solid rgba(255,45,85,0.2)}
+
+/* DIVIDER */
+.divider{border:none;border-top:1px solid var(--border2);margin:24px 0}
+
+/* TOAST */
+.toast{position:fixed;top:24px;right:24px;z-index:9999;background:rgba(0,255,135,0.12);border:1px solid rgba(0,255,135,0.25);color:var(--green);font-family:var(--font);font-size:13px;font-weight:700;letter-spacing:1px;padding:14px 22px;border-radius:10px;backdrop-filter:blur(8px);transform:translateY(-80px);opacity:0;transition:.35s cubic-bezier(.34,1.56,.64,1)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.err{background:rgba(255,45,85,0.12);border-color:rgba(255,45,85,0.25);color:var(--red)}
+
+@media(max-width:600px){.info-grid{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container header-inner">
+    <a class="logo" href="home.html">
+      <svg viewBox="0 0 60 60" fill="none">
+        <polygon points="30,2 56,16 56,44 30,58 4,44 4,16" stroke="#ff6a00" stroke-width="2" fill="none"/>
+        <circle cx="30" cy="30" r="12" stroke="#ff6a00" stroke-width="1.5" fill="none"/>
+        <line x1="30" y1="18" x2="30" y2="42" stroke="#ff6a00" stroke-width="1.5"/>
+        <line x1="18" y1="30" x2="42" y2="30" stroke="#ff6a00" stroke-width="1.5"/>
+        <circle cx="30" cy="30" r="3" fill="#ff6a00"/>
+      </svg>
+      <div><span class="logo-name">WZ CHAMPIONSHIP</span><span class="logo-sub">TOURNAMENT SYSTEM</span></div>
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="home.html">🏠 INÍCIO</a>
+      <a class="nav-link" href="index.html" id="nav-torneios" style="display:none">🏆 TORNEIOS</a>
+      <div id="header-pill"></div>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+  <div class="container">
+    <div class="page-title">MINHA <span>CONTA</span></div>
+    <p class="page-sub">GERENCIE SUAS INFORMAÇÕES E SEGURANÇA</p>
+
+    <!-- INFO CARD -->
+    <div class="profile-card">
+      <div class="card-section-title">INFORMAÇÕES DA CONTA</div>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">NICKNAME</span>
+          <span class="info-value" id="disp-nickname">—</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">EMAIL</span>
+          <span class="info-value" id="disp-email">—</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">PLANO</span>
+          <span id="disp-plan">—</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">PERFIL</span>
+          <span class="info-value" id="disp-role">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHANGE PASSWORD CARD -->
+    <div class="profile-card">
+      <div class="card-section-title">ALTERAR SENHA</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">SENHA ATUAL</label>
+          <input type="password" class="form-input" id="inp-current-pw" placeholder="Sua senha atual"/>
+        </div>
+        <div></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">NOVA SENHA</label>
+          <input type="password" class="form-input" id="inp-new-pw" placeholder="Mínimo 6 caracteres"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">CONFIRMAR NOVA SENHA</label>
+          <input type="password" class="form-input" id="inp-confirm-pw" placeholder="Repita a nova senha"/>
+        </div>
+      </div>
+      <button class="btn-save" id="btn-change-pw">SALVAR NOVA SENHA</button>
+      <div class="feedback" id="pw-feedback"></div>
+    </div>
+
+    <!-- DANGER ZONE -->
+    <div class="profile-card">
+      <div class="card-section-title" style="color:var(--red)">SESSÃO</div>
+      <p style="font-family:var(--font);font-size:13px;color:var(--text2);letter-spacing:1px;margin-bottom:16px">Encerrar sua sessão no dispositivo atual.</p>
+      <button class="btn-danger" id="btn-logout">SAIR DA CONTA</button>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api';
+
+function toast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Load user from localStorage
+const raw = localStorage.getItem('wzc_user');
+const user = raw ? JSON.parse(raw) : null;
+
+if (user) {
+  document.getElementById('disp-nickname').textContent = user.nickname;
+  document.getElementById('disp-email').textContent = user.email;
+  document.getElementById('disp-role').textContent = user.role === 'admin' ? '⚙️ Administrador' : '👤 Usuário';
+
+  const planMap = {
+    free:  { label:'FREE',  cls:'plan-free' },
+    pro:   { label:'PRO',   cls:'plan-pro' },
+    elite: { label:'ELITE ★', cls:'plan-elite' },
+  };
+  const p = planMap[user.plan] || planMap.free;
+  document.getElementById('disp-plan').innerHTML = `<span class="plan-badge ${p.cls}">${p.label}</span>`;
+
+  // Show torneios link for pro/elite/admin
+  if (user.role === 'admin' || user.plan === 'pro' || user.plan === 'elite') {
+    document.getElementById('nav-torneios').style.display = '';
+  }
+
+  // Header pill
+  document.getElementById('header-pill').innerHTML =
+    `<a href="profile.html" class="user-pill"><span class="user-dot"></span>${user.nickname}</a>`;
+}
+
+// Change password
+document.getElementById('btn-change-pw').onclick = async () => {
+  const currentPw  = document.getElementById('inp-current-pw').value;
+  const newPw      = document.getElementById('inp-new-pw').value;
+  const confirmPw  = document.getElementById('inp-confirm-pw').value;
+  const fb         = document.getElementById('pw-feedback');
+
+  fb.className = 'feedback';
+  if (!currentPw || !newPw || !confirmPw) { fb.textContent = 'Preencha todos os campos'; fb.className = 'feedback err'; return; }
+  if (newPw.length < 6) { fb.textContent = 'Nova senha: mínimo 6 caracteres'; fb.className = 'feedback err'; return; }
+  if (newPw !== confirmPw) { fb.textContent = 'As senhas não coincidem'; fb.className = 'feedback err'; return; }
+
+  const token = localStorage.getItem('wzc_token');
+  try {
+    const res = await fetch(`${API}/auth/change-password`, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', Authorization:`Bearer ${token}` },
+      body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }),
+    });
+    const data = await res.json();
+    if (!res.ok) { fb.textContent = data.error || 'Erro ao alterar senha'; fb.className = 'feedback err'; return; }
+    fb.textContent = '✓ Senha alterada com sucesso!'; fb.className = 'feedback ok';
+    document.getElementById('inp-current-pw').value = '';
+    document.getElementById('inp-new-pw').value = '';
+    document.getElementById('inp-confirm-pw').value = '';
+    toast('Senha alterada!');
+  } catch(e) { fb.textContent = 'Erro de conexão'; fb.className = 'feedback err'; }
+};
+
+// Logout
+document.getElementById('btn-logout').onclick = () => {
+  localStorage.removeItem('wzc_user');
+  localStorage.removeItem('wzc_token');
+  toast('Sessão encerrada', 'ok');
+  setTimeout(() => window.location.replace('home.html'), 1000);
+};
+</script>
+</body>
+</html>

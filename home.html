@@ -24,13 +24,15 @@ header{position:sticky;top:0;z-index:100;background:rgba(8,10,15,0.95);border-bo
 .logo svg{width:36px;height:36px;filter:drop-shadow(0 0 8px var(--orange))}
 .logo-name{font-family:var(--font);font-size:18px;font-weight:900;letter-spacing:3px}
 .logo-sub{font-family:var(--font);font-size:8px;letter-spacing:4px;color:var(--orange);display:block}
-.nav-links{display:flex;align-items:center;gap:8px}
-.nav-link{font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--text2);padding:7px 12px;border-radius:6px;transition:.2s}
+.nav-links{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
+.nav-link{font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--text2);padding:7px 12px;border-radius:6px;transition:.2s;white-space:nowrap}
 .nav-link:hover{color:var(--orange);background:rgba(255,106,0,0.08)}
-.btn-login{background:linear-gradient(135deg,var(--orange),#cc5500);color:#fff;font-family:var(--font);font-size:12px;font-weight:900;letter-spacing:2px;padding:8px 18px;border-radius:6px;transition:.2s}
+.btn-login{background:linear-gradient(135deg,var(--orange),#cc5500);color:#fff;font-family:var(--font);font-size:12px;font-weight:900;letter-spacing:2px;padding:8px 18px;border-radius:6px;transition:.2s;white-space:nowrap}
 .btn-login:hover{filter:brightness(1.15);box-shadow:0 0 16px rgba(255,106,0,0.4)}
-.user-pill{display:flex;align-items:center;gap:8px;background:rgba(255,106,0,0.1);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:1px}
-.user-dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.user-pill{display:flex;align-items:center;gap:8px;background:rgba(255,106,0,0.1);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;white-space:nowrap;text-decoration:none;color:inherit}
+.user-pill:hover{border-color:var(--orange);background:rgba(255,106,0,0.18)}
+.user-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0}
+#header-auth{display:flex;align-items:center;gap:8px}
 
 /* HERO */
 .hero{position:relative;overflow:hidden;padding:80px 0 60px;background:linear-gradient(135deg,#08090f 0%,#0f1520 60%,#0a0c14 100%)}
@@ -255,8 +257,8 @@ function renderHeaderAuth() {
     const u = JSON.parse(usr);
     const canManage = u.role === 'admin' || u.plan === 'pro' || u.plan === 'elite';
     el.innerHTML = `
-      ${canManage ? `<a href="index.html" style="display:flex;align-items:center;gap:6px;font-family:var(--font);font-size:12px;font-weight:800;letter-spacing:2px;color:#fff;background:linear-gradient(135deg,var(--orange),#cc5500);padding:8px 16px;border-radius:6px;text-decoration:none">🏆 MEUS TORNEIOS</a>` : ''}
-      <div class="user-pill"><span class="user-dot"></span>${u.nickname}</div>`;
+      ${canManage ? `<a href="index.html" style="display:flex;align-items:center;gap:6px;font-family:var(--font);font-size:12px;font-weight:800;letter-spacing:2px;color:#fff;background:linear-gradient(135deg,var(--orange),#cc5500);padding:8px 16px;border-radius:6px;text-decoration:none;white-space:nowrap">🏆 MEUS TORNEIOS</a>` : ''}
+      <a href="profile.html" class="user-pill"><span class="user-dot"></span>${u.nickname}</a>`;
   } else {
     el.innerHTML = `<a href="login.html" class="btn-login">ENTRAR</a>`;
   }

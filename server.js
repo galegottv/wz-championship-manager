@@ -170,6 +170,22 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
   res.json({ id:user.id, nickname:user.nickname, email:user.email, role:user.role, plan:user.plan, status:user.status });
 });
 
+app.post('/api/auth/change-password', authMiddleware, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) return res.status(400).json({ error:'Preencha todos os campos' });
+    if (newPassword.length < 6) return res.status(400).json({ error:'Nova senha: mínimo 6 caracteres' });
+    const user = await db.findUser({ id:req.user.id });
+    if (!user) return res.status(404).json({ error:'Usuário não encontrado' });
+    const match = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!match) return res.status(401).json({ error:'Senha atual incorreta' });
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await db.updateUser(req.user.id, { passwordHash });
+    res.json({ message:'Senha alterada com sucesso!' });
+  } catch(e) { res.status(500).json({ error:e.message }); }
+});
+
+
 // ══════════════════════════════════════════════════════
 //  ADMIN ROUTES
 // ══════════════════════════════════════════════════════
