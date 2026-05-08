@@ -17,10 +17,6 @@ const DB_FILE = path.join(__dirname, 'db.json');
 const JWT_SECRET = process.env.JWT_SECRET || 'wzchamp_super_secret_2026';
 const MONGODB_URL = process.env.MONGODB_URL || '';
 
-// Serve static files but WITHOUT auto-index (we control / manually)
-app.use(cors({ origin:'*' }));
-app.use(express.json());
-app.use(express.static(__dirname, { index: false }));
 const STRIPE_KEY = process.env.STRIPE_SECRET_KEY || '';
 const MP_TOKEN   = process.env.MP_ACCESS_TOKEN   || '';
 let stripe, mpClient;
@@ -109,7 +105,8 @@ const db = {
 // ── MIDDLEWARE ──
 app.use(cors({ origin:'*' }));
 app.use(express.json());
-app.use(express.static(__dirname));
+// Static files WITHOUT auto-index so our '/' route controls the root page
+app.use(express.static(__dirname, { index: false }));
 
 function authMiddleware(req, res, next) {
   const token = req.headers.authorization?.split(' ')[1];

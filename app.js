@@ -28,7 +28,8 @@ function blank() {
   return {
     name:'WZ Championship', season:'Season 3', phase:'Fase de Grupos — Semana 1',
     prize:'$50,000', mode:'resurgence', rounds:4,
-    groups:[], teams:[], matches:[], isLive:true, liveUrl:''
+    description:'', scheduledAt:'',
+    groups:[], teams:[], matches:[], isLive:false, liveUrl:''
   };
 }
 function loadState(){
@@ -38,7 +39,7 @@ function loadState(){
 function save(){ localStorage.setItem(LS_KEY,JSON.stringify(S)); }
 
 function hardReset(keepInfo){
-  const info = keepInfo ? {name:S.name,season:S.season,phase:S.phase,prize:S.prize,mode:S.mode,rounds:S.rounds} : {};
+  const info = keepInfo ? {name:S.name,season:S.season,phase:S.phase,prize:S.prize,mode:S.mode,rounds:S.rounds,description:S.description,scheduledAt:S.scheduledAt} : {};
   localStorage.removeItem(LS_KEY);
   S = blank();
   if(keepInfo) Object.assign(S, info);
@@ -203,6 +204,10 @@ function renderSetup(){
   document.getElementById('cfg-prize').value=S.prize||'';
   document.getElementById('cfg-mode').value=S.mode||'resurgence';
   document.getElementById('cfg-rounds').value=S.rounds||4;
+  const schedEl=document.getElementById('cfg-scheduled-at');
+  if(schedEl) schedEl.value=S.scheduledAt||'';
+  const descEl=document.getElementById('cfg-description');
+  if(descEl) descEl.value=S.description||'';
   // live url
   const liveInput=document.getElementById('cfg-live-url');
   if(liveInput) liveInput.value=S.liveUrl||'';
@@ -331,6 +336,8 @@ function setupEvents(){
     S.prize=document.getElementById('cfg-prize').value.trim();
     S.mode=document.getElementById('cfg-mode').value;
     S.rounds=parseInt(document.getElementById('cfg-rounds').value)||4;
+    S.scheduledAt=document.getElementById('cfg-scheduled-at').value||'';
+    S.description=document.getElementById('cfg-description').value.trim()||'';
     save();renderAll();
     document.getElementById('info-feedback').textContent='✓ Salvo!';
     document.getElementById('info-feedback').className='admin-feedback ok';

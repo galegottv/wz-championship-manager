@@ -235,51 +235,58 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:32px 0;m
 const API = '/api';
 const LS_KEY = 'wzc_v3';
 
+// Show access denied toast if redirected from index.html
+(function(){
+  const p = new URLSearchParams(location.search);
+  if (p.get('access') === 'denied') {
+    const t = document.createElement('div');
+    t.style.cssText = 'position:fixed;top:24px;right:24px;z-index:9999;background:rgba(255,45,85,0.15);border:1px solid rgba(255,45,85,0.5);color:#ff2d55;font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;padding:14px 20px;border-radius:8px;backdrop-filter:blur(8px)';
+    t.textContent = '🔒 Você precisa de um plano PRO ou ELITE para criar campeonatos';
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 5000);
+  }
+})();
+
 // Header auth state
 function renderHeaderAuth() {
   const usr = localStorage.getItem('wzc_user');
   const el = document.getElementById('header-auth');
   if (usr) {
     const u = JSON.parse(usr);
+    const canManage = u.role === 'admin' || u.plan === 'pro' || u.plan === 'elite';
     el.innerHTML = `
-      <a href="index.html" style="display:flex;align-items:center;gap:6px;font-family:var(--font);font-size:12px;font-weight:800;letter-spacing:2px;color:#fff;background:linear-gradient(135deg,var(--orange),#cc5500);padding:8px 16px;border-radius:6px;text-decoration:none;transition:.2s" onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter=''">\ud83c\udfc6 MEUS TORNEIOS</a>
+      ${canManage ? `<a href="index.html" style="display:flex;align-items:center;gap:6px;font-family:var(--font);font-size:12px;font-weight:800;letter-spacing:2px;color:#fff;background:linear-gradient(135deg,var(--orange),#cc5500);padding:8px 16px;border-radius:6px;text-decoration:none">🏆 MEUS TORNEIOS</a>` : ''}
       <div class="user-pill"><span class="user-dot"></span>${u.nickname}</div>`;
   } else {
     el.innerHTML = `<a href="login.html" class="btn-login">ENTRAR</a>`;
   }
 }
 
-// Load championships from localStorage (shared with index.html)
+// Load championships from localStorage
 function loadChampionships() {
   const liveGrid = document.getElementById('live-grid');
   const upGrid = document.getElementById('upcoming-grid');
-
-  // Read from localStorage (same key as tournament manager)
   const raw = localStorage.getItem(LS_KEY);
   let champ = null;
   try { champ = raw ? JSON.parse(raw) : null; } catch {}
 
-  const liveCards = [];
-  const upCards = [];
-
+  const liveCards = [], upCards = [];
   if (champ && champ.name) {
     const card = buildCard(champ);
     if (champ.isLive) liveCards.push(card);
     else upCards.push(card);
   }
-
-  // Also try server
-  fetch(`${API}/admin/stats`).catch(() => {});
-
   if (liveCards.length) liveGrid.innerHTML = liveCards.join('');
   if (upCards.length) upGrid.innerHTML = upCards.join('');
 }
 
 function buildCard(c) {
   const teams = c.teams?.length || 0;
-  const matches = c.matches?.length || 0;
   const done = c.matches?.filter(m => m.status === 'done').length || 0;
   const modeLabel = c.mode === 'resurgence' ? '🔄 Resurgência' : '💀 Battle Royale';
+  const schedLabel = c.scheduledAt
+    ? `📅 ${new Date(c.scheduledAt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`
+    : '';
   const statusBadge = c.isLive
     ? `<div class="champ-card-live"><span style="width:6px;height:6px;border-radius:50%;background:var(--red);display:inline-block;animation:pulse 1s infinite"></span>AO VIVO</div>`
     : `<div class="champ-card-soon">📅 EM BREVE</div>`;
@@ -298,6 +305,8 @@ function buildCard(c) {
         <span class="meta-item">${modeLabel}</span>
         <span class="meta-item">📌 ${c.season || ''}</span>
         ${c.prize ? `<span class="meta-item">🏆 ${c.prize}</span>` : ''}
+        ${schedLabel ? `<span class="meta-item">${schedLabel}</span>` : ''}
+        ${c.description ? `<span class="meta-item">📝 ${c.description}</span>` : ''}
       </div>
       <div class="champ-card-stats">
         <div class="cs-item"><span class="cs-val">${teams}</span><span class="cs-lbl">TIMES</span></div>

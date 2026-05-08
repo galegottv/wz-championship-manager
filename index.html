@@ -8,6 +8,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="style.css"/>
+  <script>
+    // ── AUTH GUARD — runs before page renders ──
+    (function(){
+      const raw = localStorage.getItem('wzc_user');
+      if (!raw) { window.location.replace('login.html?next=index.html'); return; }
+      try {
+        const u = JSON.parse(raw);
+        const allowed = u.role === 'admin' || u.plan === 'pro' || u.plan === 'elite';
+        if (!allowed) window.location.replace('home.html?access=denied');
+      } catch(e) { window.location.replace('login.html'); }
+    })();
+  </script>
 </head>
 <body>
 
@@ -227,11 +239,23 @@
           </div>
           <div class="form-group"><label class="form-label">Rodadas por Grupo</label><input type="number" class="form-control" id="cfg-rounds" min="1" max="20" value="4"/></div>
         </div>
+        <div class="setup-form-row">
+          <div class="form-group">
+            <label class="form-label">📅 DATA / HORA DO INÍCIO</label>
+            <input type="datetime-local" class="form-control" id="cfg-scheduled-at"/>
+            <span style="font-family:var(--font-cond);font-size:11px;color:var(--text-3);letter-spacing:1px;margin-top:4px;display:block">Deixe em branco se ainda não definido</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">📝 DESCRIÇÃO / REGRAS</label>
+            <input type="text" class="form-control" id="cfg-description" placeholder="Ex: Solos — Top 5 avançam ao playoff"/>
+          </div>
+        </div>
         <div style="display:flex;gap:10px;align-items:center">
           <button class="btn-primary" id="btn-save-info">SALVAR</button>
           <div class="admin-feedback" id="info-feedback"></div>
         </div>
       </div>
+
 
       <div class="setup-block">
         <div class="setup-block-title"><span class="setup-step-num">2</span> GRUPOS</div>
