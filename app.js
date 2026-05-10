@@ -1265,6 +1265,15 @@ window.iaPreview = function(input){
     img.style.display = 'block';
   }
 };
+// Styled version (with filename display)
+window.iaPreviewStyled = function(input){
+  window.iaPreview(input);
+  const nm = document.getElementById('ia-file-name');
+  if(nm && input.files[0]){
+    const n = input.files[0].name;
+    nm.textContent = n.length > 28 ? n.slice(0,26)+'...' : n;
+  }
+};
 
 window.iaAnalyze = async function(){
   const file = document.getElementById('ia-file').files[0];
