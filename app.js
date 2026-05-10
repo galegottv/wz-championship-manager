@@ -1,4 +1,4 @@
-// ── PONTOS OFICIAIS ──
+﻿// ── PONTOS OFICIAIS ──
 const POINTS = {
   resurgence: [15,12,9,7,5,4,3,3,2,2,1,1,1,1,1,0,0,0,0,0],
   br:         [25,20,17,15,13,11,9,8,7,6,5,4,3,2,2,1,1,1,1,0]
@@ -563,7 +563,7 @@ window.copyOverlayLink=function(){
   const url=`${location.origin}/overlay.html`;
   navigator.clipboard.writeText(url).then(()=>showToast('Link do overlay copiado! Cole no OBS Browser Source.','ok'))
     .catch(()=>{
-      const full=location.href.replace(/[^/]*$/,'overlay.html');
+      const full=location.href.replace(/[^/]*$/,'overlay');
       navigator.clipboard.writeText(full);
       showToast('Link copiado! Use como Browser Source no OBS.','ok');
     });

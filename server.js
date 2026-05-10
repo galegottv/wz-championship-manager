@@ -1,4 +1,4 @@
-// ─────────────────────────────────────────────────────────────
+﻿// ─────────────────────────────────────────────────────────────
 //  WZ CHAMPIONSHIP — EXPRESS SERVER v5.1
 //  Suporte: Local (db.json) + Nuvem (MongoDB Atlas via MONGODB_URL)
 // ─────────────────────────────────────────────────────────────
@@ -281,8 +281,8 @@ app.post('/api/payments/stripe/create-session', authMiddleware, async (req, res)
       payment_method_types:['card'], mode:'subscription',
       line_items:[{ price_data:{ currency:'brl', product_data:{ name:`WZ Championship — ${planData.name}` }, unit_amount:planData.priceBRL, recurring:{ interval:'month' } }, quantity:1 }],
       metadata:{ userId:req.user.id, plan },
-      success_url:`${base}/login.html?payment=success&plan=${plan}`,
-      cancel_url:`${base}/login.html?payment=cancelled`,
+      success_url:`${base}/login?payment=success&plan=${plan}`,
+      cancel_url:`${base}/login?payment=cancelled`,
     });
     res.json({ url:session.url });
   } catch(e) { res.status(500).json({ error:e.message }); }
@@ -355,14 +355,41 @@ app.post('/api/setup', async (req, res) => {
   } catch(e) { res.status(500).json({ error:e.message }); }
 });
 
-// Root always → home.html
+
+// ── Clean URL routing ──
+// Root → home
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
-// Any other non-API path → serve the .html file or fallback to home.html
+
+// Maps clean slugs to HTML files
+const PAGE_MAP = {
+  'home':         'home.html',
+  'login':        'login.html',
+  'index':        'index.html',
+  'teams':        'teams.html',
+  'admin':        'admin.html',
+  'overlay':      'overlay.html',
+  'overlay-maps': 'overlay-maps.html',
+  'profile':      'profile.html',
+};
+
 app.get('*', (req, res) => {
-  if (req.path.startsWith('/api/')) return res.status(404).json({ error:'Not found' });
-  const file = req.path.endsWith('.html') ? req.path.slice(1) : 'home.html';
-  res.sendFile(path.join(__dirname, file), err => { if(err) res.sendFile(path.join(__dirname,'home.html')); });
+  if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/')) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  // Serve as-is if already has extension (backwards compat)
+  if (req.path.match(/\.[a-z]+$/i)) {
+    return res.sendFile(path.join(__dirname, req.path.slice(1)), err => {
+      if (err) res.sendFile(path.join(__dirname, 'home.html'));
+    });
+  }
+  // Clean URL: /login → login.html
+  const slug = req.path.slice(1).toLowerCase();
+  const file = PAGE_MAP[slug] || (slug + '.html');
+  res.sendFile(path.join(__dirname, file), err => {
+    if (err) res.sendFile(path.join(__dirname, 'home.html'));
+  });
 });
+
 
 // ══════════════════════════════════════════════════════
 //  MULTER — upload de logos
@@ -629,8 +656,8 @@ app.post('/api/championships/:id/register', authMiddleware, async (req, res) => 
           payment_method_types: ['card'], mode: 'payment',
           line_items: [{ price_data: { currency: 'brl', product_data: { name: `Inscrição: ${champ.name} — ${team.name}` }, unit_amount: fee }, quantity: 1 }],
           metadata: { regId: reg.id },
-          success_url: `${base}/teams.html?payment=success`,
-          cancel_url: `${base}/teams.html?payment=cancelled`,
+          success_url: `${base}/teams?payment=success`,
+          cancel_url: `${base}/teams?payment=cancelled`,
         });
         return res.json({ reg, paymentUrl: session.url, method: 'stripe' });
       }

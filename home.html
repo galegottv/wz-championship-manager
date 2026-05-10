@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"/>
@@ -158,7 +158,7 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:32px 0;m
 
 <header>
   <div class="container header-inner">
-    <a class="logo" href="home.html">
+    <a class="logo" href="home">
       <svg viewBox="0 0 60 60" fill="none">
         <polygon points="30,2 56,16 56,44 30,58 4,44 4,16" stroke="#ff6a00" stroke-width="2" fill="none"/>
         <circle cx="30" cy="30" r="12" stroke="#ff6a00" stroke-width="1.5" fill="none"/>
@@ -169,8 +169,8 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:32px 0;m
       <div><span class="logo-name">WZ CHAMPIONSHIP</span><span class="logo-sub">TOURNAMENT SYSTEM</span></div>
     </a>
     <div class="nav-links">
-      <a class="nav-link" href="home.html">INÍCIO</a>
-      <a class="nav-link" href="teams.html">🛡️ TIMES</a>
+      <a class="nav-link" href="home">INÍCIO</a>
+      <a class="nav-link" href="teams">🛡️ TIMES</a>
       <a class="nav-link" href="#plans">PLANOS</a>
       <div id="header-auth"></div>
     </div>
@@ -184,7 +184,7 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:32px 0;m
     <h1 class="hero-title">WZ <span>CHAMPIONSHIP</span><br>MANAGER</h1>
     <p class="hero-sub">Sistema completo de campeonatos Warzone — standings ao vivo, overlay para stream e muito mais</p>
     <div class="hero-cta">
-      <a href="login.html" class="btn-cta btn-cta-primary">ENTRAR / CADASTRAR</a>
+      <a href="login" class="btn-cta btn-cta-primary">ENTRAR / CADASTRAR</a>
       <a href="#live" class="btn-cta btn-cta-secondary">VER AO VIVO</a>
     </div>
   </div>
@@ -205,7 +205,7 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:32px 0;m
           <div class="live-panel-name" id="lp-name">—</div>
           <div class="live-panel-mode" id="lp-mode">—</div>
         </div>
-        <a href="index.html" style="font-family:var(--font);font-size:11px;font-weight:800;letter-spacing:2px;color:var(--orange);border:1px solid rgba(255,106,0,.3);padding:6px 14px;border-radius:6px;text-decoration:none">VER COMPLETO →</a>
+        <a href="index" style="font-family:var(--font);font-size:11px;font-weight:800;letter-spacing:2px;color:var(--orange);border:1px solid rgba(255,106,0,.3);padding:6px 14px;border-radius:6px;text-decoration:none">VER COMPLETO →</a>
       </div>
       <div class="live-panel-body">
         <!-- Queda atual -->
@@ -265,7 +265,7 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:32px 0;m
           <div class="feat"><span class="feat-icon no">✕</span>Overlay para live</div>
           <div class="feat"><span class="feat-icon no">✕</span>Link AO VIVO</div>
         </div>
-        <a href="login.html" class="btn-plan btn-plan-free">COMEÇAR GRÁTIS</a>
+        <a href="login" class="btn-plan btn-plan-free">COMEÇAR GRÁTIS</a>
       </div>
 
       <div class="plan-card highlight">
@@ -278,7 +278,7 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:32px 0;m
           <div class="feat ok"><span class="feat-icon yes">✓</span>Botão AO VIVO com link</div>
           <div class="feat"><span class="feat-icon no">✕</span>Múltiplos campeonatos</div>
         </div>
-        <a href="login.html?plan=pro" class="btn-plan btn-plan-paid">ASSINAR PRO</a>
+        <a href="login?plan=pro" class="btn-plan btn-plan-paid">ASSINAR PRO</a>
       </div>
 
       <div class="plan-card">
@@ -291,7 +291,7 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:32px 0;m
           <div class="feat ok"><span class="feat-icon yes">✓</span>Suporte prioritário</div>
           <div class="feat ok"><span class="feat-icon yes">✓</span>Badge verificado</div>
         </div>
-        <a href="login.html?plan=elite" class="btn-plan btn-plan-paid">ASSINAR ELITE</a>
+        <a href="login?plan=elite" class="btn-plan btn-plan-paid">ASSINAR ELITE</a>
       </div>
 
     </div>
@@ -302,7 +302,7 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:32px 0;m
   <div class="container footer-inner">
     <span class="footer-logo">WZ CHAMPIONSHIP</span>
     <span class="footer-copy">© 2026 — Warzone BO7 Season 3</span>
-    <a href="login.html" style="font-family:var(--font);font-size:12px;color:var(--orange);letter-spacing:2px">ENTRAR →</a>
+    <a href="login" style="font-family:var(--font);font-size:12px;color:var(--orange);letter-spacing:2px">ENTRAR →</a>
   </div>
 </footer>
 
@@ -416,11 +416,11 @@ function renderHeaderAuth() {
     const u = JSON.parse(usr);
     const canManage = u.role === 'admin' || u.plan === 'pro' || u.plan === 'elite';
     el.innerHTML = `
-      ${u.role === 'admin' ? `<a href="admin.html" style="font-family:var(--font);font-size:12px;font-weight:800;letter-spacing:2px;color:var(--orange);padding:7px 12px;border-radius:6px;text-decoration:none;transition:.2s;border:1px solid rgba(255,106,0,0.3)" onmouseover="this.style.background='rgba(255,106,0,0.1)'" onmouseout="this.style.background='transparent'">⚙️ ADMIN</a>` : ''}
-      ${canManage ? `<a href="index.html" style="display:flex;align-items:center;gap:6px;font-family:var(--font);font-size:12px;font-weight:800;letter-spacing:2px;color:#fff;background:linear-gradient(135deg,var(--orange),#cc5500);padding:8px 16px;border-radius:6px;text-decoration:none;white-space:nowrap">🏆 MEUS TORNEIOS</a>` : ''}
-      <a href="profile.html" class="user-pill"><span class="user-dot"></span>${u.nickname}</a>`;
+      ${u.role === 'admin' ? `<a href="admin" style="font-family:var(--font);font-size:12px;font-weight:800;letter-spacing:2px;color:var(--orange);padding:7px 12px;border-radius:6px;text-decoration:none;transition:.2s;border:1px solid rgba(255,106,0,0.3)" onmouseover="this.style.background='rgba(255,106,0,0.1)'" onmouseout="this.style.background='transparent'">⚙️ ADMIN</a>` : ''}
+      ${canManage ? `<a href="index" style="display:flex;align-items:center;gap:6px;font-family:var(--font);font-size:12px;font-weight:800;letter-spacing:2px;color:#fff;background:linear-gradient(135deg,var(--orange),#cc5500);padding:8px 16px;border-radius:6px;text-decoration:none;white-space:nowrap">🏆 MEUS TORNEIOS</a>` : ''}
+      <a href="profile" class="user-pill"><span class="user-dot"></span>${u.nickname}</a>`;
   } else {
-    el.innerHTML = `<a href="login.html" class="btn-login">ENTRAR</a>`;
+    el.innerHTML = `<a href="login" class="btn-login">ENTRAR</a>`;
   }
 }
 
@@ -457,7 +457,7 @@ function buildCard(c) {
     : '';
   const liveBtn = c.isLive && c.liveUrl
     ? `<a href="${c.liveUrl}" target="_blank" class="champ-card-btn" style="background:rgba(255,45,85,.15);border-color:rgba(255,45,85,.4);color:var(--red)">▶ ASSISTIR</a>`
-    : `<a href="index.html" class="champ-card-btn">VER STANDINGS</a>`;
+    : `<a href="index" class="champ-card-btn">VER STANDINGS</a>`;
   const usr = localStorage.getItem('wzc_user');
   const registerBtn = c.registrationsOpen
     ? `<button class="champ-card-btn" style="background:rgba(0,255,135,.1);border-color:rgba(0,255,135,.3);color:#00ff87;margin-left:4px" onclick="openRegisterModal('${c.id||'local'}','${c.name.replace(/'/g,"\\'")}',${c.entryFee||0})">📋 INSCREVER</button>`
@@ -494,7 +494,7 @@ function buildCard(c) {
 
 function openRegisterModal(champId, champName, fee) {
   const usr = localStorage.getItem('wzc_user');
-  if (!usr) { window.location.href = 'login.html?next=teams.html'; return; }
+  if (!usr) { window.location.href = 'login?next=teams'; return; }
   // Redirect to teams page with champId pre-selected
   window.location.href = `teams.html?register=${encodeURIComponent(champId)}&champName=${encodeURIComponent(champName)}&fee=${fee}`;
 }

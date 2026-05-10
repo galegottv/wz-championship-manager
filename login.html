@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"/>
@@ -83,7 +83,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </head>
 <body>
 
-<a class="back-link" href="home.html">← INÍCIO</a>
+<a class="back-link" href="home">← INÍCIO</a>
 
 <div class="logo">
   <svg viewBox="0 0 60 60" fill="none">
@@ -212,7 +212,7 @@ async function doLogin() {
     localStorage.setItem('wzc_token', d.token);
     localStorage.setItem('wzc_user', JSON.stringify(d.user));
     showMsg('login-msg','Login realizado! Redirecionando...','ok');
-    setTimeout(() => { window.location.href = d.user.role==='admin' ? 'index.html' : 'index.html'; }, 800);
+    setTimeout(() => { window.location.href = d.user.role==='admin' ? 'index' : 'index'; }, 800);
   } catch(e) {
     showMsg('login-msg','Servidor offline. Usando modo local.','err');
     // Fallback local
@@ -228,7 +228,7 @@ function localLogin(email, pass) {
     localStorage.setItem('wzc_token','local_admin_token');
     localStorage.setItem('wzc_user',JSON.stringify(u));
     showMsg('login-msg','Login local (modo offline). Redirecionando...','ok');
-    setTimeout(() => window.location.href='index.html', 800);
+    setTimeout(() => window.location.href='index', 800);
   } else {
     showMsg('login-msg','Servidor offline. Credenciais inválidas para modo local.','err');
   }
@@ -306,7 +306,7 @@ async function pollPixStatus() {
     if (d.status === 'approved') {
       clearInterval(pixPollInterval);
       document.getElementById('pix-status-msg').textContent='✓ Pagamento confirmado! Redirecionando...';
-      setTimeout(() => { closePayModal(); window.location.href='index.html'; }, 2000);
+      setTimeout(() => { closePayModal(); window.location.href='index'; }, 2000);
     }
   } catch {}
 }
@@ -332,7 +332,7 @@ if (tok && usr) {
     const plan = params.get('plan');
     showMsg('login-msg',`✓ Plano ${plan?.toUpperCase()} ativado! Bem-vindo!`,'ok');
   } else {
-    window.location.href='index.html';
+    window.location.href='index';
   }
 }
 </script>

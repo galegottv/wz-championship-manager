@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
@@ -12,12 +12,12 @@
     // ── AUTH GUARD — runs before page renders ──
     (function(){
       const raw = localStorage.getItem('wzc_user');
-      if (!raw) { window.location.replace('login.html?next=index.html'); return; }
+      if (!raw) { window.location.replace('login?next=index'); return; }
       try {
         const u = JSON.parse(raw);
         const allowed = u.role === 'admin' || u.plan === 'pro' || u.plan === 'elite';
-        if (!allowed) window.location.replace('home.html?access=denied');
-      } catch(e) { window.location.replace('login.html'); }
+        if (!allowed) window.location.replace('home?access=denied');
+      } catch(e) { window.location.replace('login'); }
     })();
   </script>
 </head>
@@ -27,7 +27,7 @@
 <header class="site-header">
   <div class="header-bg"></div>
   <div class="header-inner">
-    <a class="logo-area" href="home.html" title="Página Inicial" style="text-decoration:none;color:inherit">
+    <a class="logo-area" href="home" title="Página Inicial" style="text-decoration:none;color:inherit">
       <svg class="logo-icon" viewBox="0 0 60 60" fill="none">
         <polygon points="30,2 56,16 56,44 30,58 4,44 4,16" fill="none" stroke="#ff6a00" stroke-width="2"/>
         <circle cx="30" cy="30" r="12" fill="none" stroke="#ff6a00" stroke-width="1.5"/>
@@ -54,7 +54,7 @@
 
     <!-- HEADER RIGHT -->
     <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
-      <a href="home.html" style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-2);padding:6px 12px;border-radius:6px;border:1px solid transparent;transition:.2s;text-decoration:none" onmouseover="this.style.color='var(--orange)';this.style.borderColor='var(--border)'" onmouseout="this.style.color='var(--text-2)';this.style.borderColor='transparent'">🏠 INÍCIO</a>
+      <a href="home" style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-2);padding:6px 12px;border-radius:6px;border:1px solid transparent;transition:.2s;text-decoration:none" onmouseover="this.style.color='var(--orange)';this.style.borderColor='var(--border)'" onmouseout="this.style.color='var(--text-2)';this.style.borderColor='transparent'">🏠 INÍCIO</a>
       <div id="hdr-user-pill"></div>
     </div>
   </div>
@@ -428,8 +428,8 @@
           <h3 class="admin-card-title">CONTROLES</h3>
           <div class="admin-actions-list">
             <button class="btn-secondary" id="btn-toggle-live">🔴 TOGGLE AO VIVO</button>
-            <button class="btn-secondary" id="btn-open-overlay" onclick="window.open('overlay.html','_blank','width=820,height=480')">🎬 OVERLAY STANDINGS (OBS)</button>
-            <button class="btn-secondary" id="btn-open-overlay-maps" onclick="window.open('overlay-maps.html','_blank','width=1920,height=1080')">🗺 OVERLAY MAPAS (OBS)</button>
+            <button class="btn-secondary" id="btn-open-overlay" onclick="window.open('overlay','_blank','width=820,height=480')">🎬 OVERLAY STANDINGS (OBS)</button>
+            <button class="btn-secondary" id="btn-open-overlay-maps" onclick="window.open('overlay-maps','_blank','width=1920,height=1080')">🗺 OVERLAY MAPAS (OBS)</button>
             <button class="btn-secondary" id="btn-copy-overlay" onclick="copyOverlayLink()">📋 COPIAR LINK OVERLAY</button>
           </div>
           <div class="live-url-block">

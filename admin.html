@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"/>
@@ -8,9 +8,9 @@
 <script>
   (function(){
     const raw = localStorage.getItem('wzc_user');
-    if (!raw) { window.location.replace('login.html'); return; }
+    if (!raw) { window.location.replace('login'); return; }
     const u = JSON.parse(raw);
-    if (u.role !== 'admin') { window.location.replace('home.html?access=denied'); }
+    if (u.role !== 'admin') { window.location.replace('home?access=denied'); }
   })();
 </script>
 <style>
@@ -125,7 +125,7 @@ header{position:sticky;top:0;z-index:100;background:rgba(8,10,15,0.96);border-bo
 
 <header>
   <div class="container header-inner">
-    <a class="logo" href="home.html">
+    <a class="logo" href="home">
       <svg viewBox="0 0 60 60" fill="none">
         <polygon points="30,2 56,16 56,44 30,58 4,44 4,16" stroke="#ff6a00" stroke-width="2" fill="none"/>
         <circle cx="30" cy="30" r="12" stroke="#ff6a00" stroke-width="1.5" fill="none"/>
@@ -136,9 +136,9 @@ header{position:sticky;top:0;z-index:100;background:rgba(8,10,15,0.96);border-bo
       <div><span class="logo-name">WZ CHAMPIONSHIP</span><span class="logo-sub">TOURNAMENT SYSTEM</span></div>
     </a>
     <div class="nav-links">
-      <a class="nav-link" href="home.html">🏠 INÍCIO</a>
-      <a class="nav-link" href="index.html">🏆 TORNEIOS</a>
-      <a class="nav-link" href="profile.html">👤 CONTA</a>
+      <a class="nav-link" href="home">🏠 INÍCIO</a>
+      <a class="nav-link" href="index">🏆 TORNEIOS</a>
+      <a class="nav-link" href="profile">👤 CONTA</a>
       <span class="admin-badge">⚙️ ADMIN</span>
     </div>
   </div>
