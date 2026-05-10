@@ -113,6 +113,7 @@
       <a href="#" class="sub-link" data-sub="groups">👥 GRUPOS</a>
       <a href="#" class="sub-link" data-sub="matches">🎮 PARTIDAS</a>
       <a href="#" class="sub-link" data-sub="bracket">🏆 BRACKET</a>
+      <a href="#" class="sub-link" data-sub="mvp">🎯 MVP</a>
       <a href="#" class="sub-link" data-sub="pontos">📋 PONTUAÇÃO</a>
       <a href="#" class="sub-link sub-admin" data-sub="ia">🤖 IA SCORING</a>
       <a href="#" class="sub-link sub-admin" data-sub="setup">⚙ CONFIGURAR</a>
@@ -129,16 +130,9 @@
         <h2 class="section-title">CLASSIFICAÇÃO GERAL</h2>
         <select class="filter-select" id="standings-group-filter"><option value="all">Todos os Grupos</option></select>
       </div>
-      <div class="standings-table-wrap">
-        <table class="standings-table">
-          <thead><tr>
-            <th>#</th><th class="th-team">TIME</th><th>GRP</th>
-            <th>PTS</th><th>KILLS</th><th>P</th><th>V</th><th>TOP5</th><th>AVG</th><th>STATUS</th>
-          </tr></thead>
-          <tbody id="standings-body"></tbody>
-        </table>
-      </div>
+      <div id="standings-body" style="display:flex;flex-direction:column;gap:8px;padding:4px 0"></div>
     </section>
+
 
     <!-- GROUPS -->
     <section class="sub-panel" id="sub-groups">
@@ -173,6 +167,15 @@
         <span class="section-badge warning">Automático após grupos</span>
       </div>
       <div class="bracket-wrap" id="bracket-wrap"></div>
+    </section>
+
+    <!-- MVP / LEADERBOARD -->
+    <section class="sub-panel" id="sub-mvp">
+      <div class="section-header">
+        <h2 class="section-title">🎯 MVP — LEADERBOARD DE JOGADORES</h2>
+        <span class="section-badge warning">Baseado nos resultados registrados por time</span>
+      </div>
+      <div id="mvp-body" style="display:flex;flex-direction:column;gap:0"></div>
     </section>
 
     <!-- PONTUAÇÃO -->
@@ -347,7 +350,8 @@
           <h3 class="admin-card-title">CONTROLES</h3>
           <div class="admin-actions-list">
             <button class="btn-secondary" id="btn-toggle-live">🔴 TOGGLE AO VIVO</button>
-            <button class="btn-secondary" id="btn-open-overlay" onclick="window.open('overlay.html','_blank','width=820,height=480')">🎬 ABRIR OVERLAY (OBS)</button>
+            <button class="btn-secondary" id="btn-open-overlay" onclick="window.open('overlay.html','_blank','width=820,height=480')">🎬 OVERLAY STANDINGS (OBS)</button>
+            <button class="btn-secondary" id="btn-open-overlay-maps" onclick="window.open('overlay-maps.html','_blank','width=1920,height=1080')">🗺 OVERLAY MAPAS (OBS)</button>
             <button class="btn-secondary" id="btn-copy-overlay" onclick="copyOverlayLink()">📋 COPIAR LINK OVERLAY</button>
           </div>
           <div class="live-url-block">

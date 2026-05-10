@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>WZ Map Rotation Overlay</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --orange:#ff6a00;--red:#ff2d55;--green:#00ff87;--gold:#ffd700;
+  --font:'Barlow Condensed',sans-serif;
+  --dur:8000; /* ms per map */
+}
+html,body{width:1920px;height:1080px;overflow:hidden;background:transparent;font-family:var(--font)}
+
+/* ─── SLIDE CONTAINER ─────────────────────────────── */
+#slides{position:relative;width:100%;height:100%}
+.slide{
+  position:absolute;inset:0;
+  opacity:0;transition:opacity .8s ease;
+  pointer-events:none;
+}
+.slide.active{opacity:1;pointer-events:auto;}
+
+/* ─── MAP BG ─────────────────────────────────────── */
+.map-bg{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center;
+  transform:scale(1.08);
+  transition:transform 8s linear;
+  filter:brightness(.55) saturate(1.1);
+}
+.slide.active .map-bg{transform:scale(1.0);}
+
+/* Cinematic vignette + gradient overlay */
+.map-overlay{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,.65) 100%),
+    linear-gradient(to right, rgba(0,0,0,.8) 0%, transparent 40%, transparent 60%, rgba(0,0,0,.8) 100%),
+    linear-gradient(to bottom, rgba(0,0,0,.5) 0%, transparent 20%, transparent 75%, rgba(0,0,0,.9) 100%);
+}
+
+/* ─── MAP INFO (bottom-left) ──────────────────────── */
+.map-info{
+  position:absolute;bottom:80px;left:80px;
+  opacity:0;transform:translateY(20px);
+  transition:opacity .6s .4s ease, transform .6s .4s ease;
+}
+.slide.active .map-info{opacity:1;transform:translateY(0);}
+
+.map-number{
+  font-size:12px;font-weight:700;letter-spacing:5px;color:var(--orange);
+  margin-bottom:6px;text-transform:uppercase;
+}
+.map-title{
+  font-size:96px;font-weight:900;letter-spacing:-1px;
+  line-height:.9;color:#fff;
+  text-shadow:0 4px 40px rgba(0,0,0,.8);
+  text-transform:uppercase;
+}
+.map-mode-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  margin-top:14px;
+  background:rgba(255,106,0,.15);
+  border:1px solid rgba(255,106,0,.4);
+  border-radius:4px;padding:6px 16px;
+  font-size:13px;font-weight:800;letter-spacing:3px;color:var(--orange);
+  backdrop-filter:blur(6px);
+}
+.map-desc{
+  margin-top:10px;
+  font-size:16px;font-weight:500;letter-spacing:2px;
+  color:rgba(255,255,255,.55);text-transform:uppercase;
+}
+
+/* ─── TOURNAMENT INFO (top-center) ───────────────── */
+.tourney-info{
+  position:absolute;top:48px;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:20px;
+  background:rgba(8,10,15,.75);
+  border:1px solid rgba(255,106,0,.25);
+  border-radius:8px;padding:12px 28px;
+  backdrop-filter:blur(12px);
+  white-space:nowrap;
+  opacity:0;transition:opacity .6s .2s;
+}
+.slide.active .tourney-info{opacity:1;}
+
+.tourney-logo{width:32px;height:32px;filter:drop-shadow(0 0 8px var(--orange));}
+.tourney-name{font-size:18px;font-weight:900;letter-spacing:4px;color:#fff;}
+.tourney-sep{width:1px;height:28px;background:rgba(255,106,0,.3);}
+.tourney-phase{font-size:12px;font-weight:700;letter-spacing:3px;color:var(--orange);}
+
+/* ─── LIVE BADGE ──────────────────────────────────── */
+.live-badge{
+  position:absolute;top:52px;right:80px;
+  display:flex;align-items:center;gap:8px;
+  background:rgba(255,45,85,.2);border:1px solid rgba(255,45,85,.5);
+  border-radius:4px;padding:8px 18px;
+  font-size:13px;font-weight:800;letter-spacing:4px;color:#ff2d55;
+  backdrop-filter:blur(6px);
+  opacity:0;transition:opacity .6s .3s;
+}
+.slide.active .live-badge{opacity:1;}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#ff2d55;animation:pulse 1.2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(255,45,85,.6)}50%{opacity:.4;box-shadow:0 0 0 8px rgba(255,45,85,0)}}
+
+/* ─── MAP PROGRESS DOTS (bottom-center) ──────────── */
+.progress-dots{
+  position:absolute;bottom:40px;left:50%;transform:translateX(-50%);
+  display:flex;gap:8px;align-items:center;
+}
+.dot{
+  width:28px;height:3px;border-radius:2px;
+  background:rgba(255,255,255,.2);transition:background .3s;overflow:hidden;
+  position:relative;
+}
+.dot.active{background:rgba(255,106,0,.4);}
+.dot-fill{
+  position:absolute;top:0;left:0;height:100%;width:0;
+  background:var(--orange);border-radius:2px;
+}
+.dot.active .dot-fill{animation:fill var(--dur, 8000)ms linear forwards;}
+@keyframes fill{from{width:0}to{width:100%}}
+
+/* ─── MAP COUNT BADGE (top-left) ─────────────────── */
+.map-count-badge{
+  position:absolute;top:52px;left:80px;
+  background:rgba(8,10,15,.8);border:1px solid rgba(255,255,255,.1);
+  border-radius:6px;padding:10px 20px;
+  opacity:0;transition:opacity .6s .3s;
+}
+.slide.active .map-count-badge{opacity:1;}
+.map-count-num{font-size:32px;font-weight:900;color:var(--orange);}
+.map-count-total{font-size:14px;font-weight:700;color:rgba(255,255,255,.4);}
+.map-count-label{font-size:10px;letter-spacing:3px;color:rgba(255,255,255,.3);margin-top:2px;}
+
+/* ─── SCAN LINE EFFECT ──────────────────────────── */
+.scanlines{
+  position:fixed;inset:0;pointer-events:none;z-index:100;
+  background:repeating-linear-gradient(
+    0deg,
+    transparent,transparent 2px,
+    rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px
+  );
+}
+
+/* ─── CORNER DECORATIONS ─────────────────────────── */
+.corner{position:absolute;width:40px;height:40px;}
+.corner-tl{top:24px;left:24px;border-top:2px solid rgba(255,106,0,.5);border-left:2px solid rgba(255,106,0,.5);}
+.corner-tr{top:24px;right:24px;border-top:2px solid rgba(255,106,0,.5);border-right:2px solid rgba(255,106,0,.5);}
+.corner-bl{bottom:24px;left:24px;border-bottom:2px solid rgba(255,106,0,.5);border-left:2px solid rgba(255,106,0,.5);}
+.corner-br{bottom:24px;right:24px;border-bottom:2px solid rgba(255,106,0,.5);border-right:2px solid rgba(255,106,0,.5);}
+
+/* ─── TRANSITION FLASH ─────────────────────────── */
+.flash{
+  position:fixed;inset:0;background:#ff6a00;
+  opacity:0;pointer-events:none;z-index:999;
+  transition:opacity .1s;
+}
+.flash.on{opacity:.08;}
+</style>
+</head>
+<body>
+
+<div class="scanlines"></div>
+<div class="flash" id="flash"></div>
+<div class="corner corner-tl"></div>
+<div class="corner corner-tr"></div>
+<div class="corner corner-bl"></div>
+<div class="corner corner-br"></div>
+
+<div id="slides"></div>
+
+<!-- Progress dots -->
+<div class="progress-dots" id="dots"></div>
+
+<script>
+// ── MAPS CONFIG ───────────────────────────────────────
+// 10 mapas: 2 BR + 2 Resurgence + 6 extras (usando imagens locais e fallback via gradiente)
+const MAPS = [
+  {
+    id:'verdansk', name:'Verdansk', mode:'BATTLE ROYALE',
+    desc:'O mapa clássico — de volta à guerra',
+    img:'maps/verdansk.png',
+    fallbackGradient:'linear-gradient(135deg,#1a2a1a 0%,#2d4a1e 40%,#1a3a2a 100%)',
+    accentColor:'#4caf50'
+  },
+  {
+    id:'rebirth', name:'Rebirth Island', mode:'RESSURGÊNCIA',
+    desc:'A ilha da ressurgência — ação não para',
+    img:'maps/rebirth_island.png',
+    fallbackGradient:'linear-gradient(135deg,#1a1a2e 0%,#16213e 40%,#0f3460 100%)',
+    accentColor:'#2196f3'
+  },
+  {
+    id:'avalon', name:'Avalon', mode:'BATTLE ROYALE',
+    desc:'Novo território — Season 3 2026',
+    img:'maps/avalon.png',
+    fallbackGradient:'linear-gradient(135deg,#2e1a1a 0%,#4a2010 40%,#3a1a0a 100%)',
+    accentColor:'#ff9800'
+  },
+  {
+    id:'haven', name:"Haven's Hollow", mode:'RESSURGÊNCIA',
+    desc:'A nova arena — Season 1 BO7',
+    img:'maps/havens_hollow.png',
+    fallbackGradient:'linear-gradient(135deg,#1a1a3e 0%,#2a1050 40%,#1a0a3a 100%)',
+    accentColor:'#9c27b0'
+  },
+  {
+    id:'verdansk2', name:'Verdansk — Norte', mode:'BATTLE ROYALE',
+    desc:'Zona norte — confronto final',
+    img:'maps/verdansk.png',
+    fallbackGradient:'linear-gradient(135deg,#0d1f0d 0%,#1a3a0a 40%,#0d2a1a 100%)',
+    accentColor:'#66bb6a'
+  },
+  {
+    id:'rebirth2', name:'Rebirth — Praia', mode:'RESSURGÊNCIA',
+    desc:'Costa leste — posições privilegiadas',
+    img:'maps/rebirth_island.png',
+    fallbackGradient:'linear-gradient(135deg,#0a1a3e 0%,#0a2a5e 40%,#0a1040 100%)',
+    accentColor:'#42a5f5'
+  },
+  {
+    id:'avalon2', name:'Avalon — Centro', mode:'BATTLE ROYALE',
+    desc:'Zona urbana — batalha intensa',
+    img:'maps/avalon.png',
+    fallbackGradient:'linear-gradient(135deg,#3e1a0a 0%,#5e2a0a 40%,#4e1a0a 100%)',
+    accentColor:'#ffa726'
+  },
+  {
+    id:'haven2', name:"Haven's — Vale", mode:'RESSURGÊNCIA',
+    desc:'Vale profundo — emboscadas inevitáveis',
+    img:'maps/havens_hollow.png',
+    fallbackGradient:'linear-gradient(135deg,#200a3e 0%,#380a5e 40%,#200a4e 100%)',
+    accentColor:'#ab47bc'
+  },
+  {
+    id:'verdansk3', name:'Verdansk — Sul', mode:'BATTLE ROYALE',
+    desc:'Zona industrial — campo aberto',
+    img:'maps/verdansk.png',
+    fallbackGradient:'linear-gradient(135deg,#0a1a0a 0%,#1a2a0a 40%,#0a2010 100%)',
+    accentColor:'#81c784'
+  },
+  {
+    id:'rebirth3', name:'Rebirth — Telhados', mode:'RESSURGÊNCIA',
+    desc:'Altitude máxima — visão total do campo',
+    img:'maps/rebirth_island.png',
+    fallbackGradient:'linear-gradient(135deg,#050a1e 0%,#0a1a3e 40%,#050a2e 100%)',
+    accentColor:'#64b5f6'
+  },
+];
+
+const LS_KEY = 'wzc_v3';
+const INTERVAL_MS = 8000; // 8s per map
+
+let current = 0;
+let timer = null;
+let animKey = 0;
+
+function getState() {
+  try { const r = localStorage.getItem(LS_KEY); if(r) return JSON.parse(r); } catch {}
+  return { name:'WZ CHAMPIONSHIP', phase:'MAP ROTATION', isLive:true };
+}
+
+function buildSlides() {
+  const S = getState();
+  const container = document.getElementById('slides');
+  const dotsEl = document.getElementById('dots');
+  container.innerHTML = '';
+  dotsEl.innerHTML = '';
+
+  MAPS.forEach((m, i) => {
+    // Slide
+    const slide = document.createElement('div');
+    slide.className = 'slide';
+    slide.id = `slide-${i}`;
+    slide.innerHTML = `
+      <div class="map-bg" id="bg-${i}" style="background-image:url('${m.img}'),${m.fallbackGradient}"></div>
+      <div class="map-overlay"></div>
+
+      <!-- tournament info top-center -->
+      <div class="tourney-info">
+        <svg class="tourney-logo" viewBox="0 0 60 60" fill="none">
+          <polygon points="30,2 56,16 56,44 30,58 4,44 4,16" stroke="#ff6a00" stroke-width="2" fill="none"/>
+          <circle cx="30" cy="30" r="10" stroke="#ff6a00" stroke-width="1.5" fill="none"/>
+          <circle cx="30" cy="30" r="3" fill="#ff6a00"/>
+        </svg>
+        <span class="tourney-name" id="ov-name-${i}">${(S.name||'WZ CHAMPIONSHIP').toUpperCase()}</span>
+        <div class="tourney-sep"></div>
+        <span class="tourney-phase" id="ov-phase-${i}">${(S.phase||'MAP ROTATION').toUpperCase()}</span>
+      </div>
+
+      <!-- map count top-left -->
+      <div class="map-count-badge">
+        <div style="display:flex;align-items:baseline;gap:4px">
+          <span class="map-count-num" style="color:${m.accentColor}">${String(i+1).padStart(2,'0')}</span>
+          <span class="map-count-total">/ ${MAPS.length}</span>
+        </div>
+        <div class="map-count-label">MAPA</div>
+      </div>
+
+      <!-- live badge top-right -->
+      ${S.isLive !== false ? `<div class="live-badge"><span class="live-dot"></span>AO VIVO</div>` : ''}
+
+      <!-- map info bottom-left -->
+      <div class="map-info">
+        <div class="map-number">MAPA ${String(i+1).padStart(2,'0')} DE ${MAPS.length}</div>
+        <div class="map-title" style="color:#fff;text-shadow:0 0 80px ${m.accentColor}66,0 4px 40px rgba(0,0,0,.8)">${m.name}</div>
+        <div class="map-mode-badge" style="background:${m.accentColor}22;border-color:${m.accentColor}66;color:${m.accentColor}">
+          ${m.mode === 'BATTLE ROYALE' ? '💀' : '🔄'} ${m.mode}
+        </div>
+        <div class="map-desc">${m.desc}</div>
+      </div>
+    `;
+    container.appendChild(slide);
+
+    // Dot
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.id = `dot-${i}`;
+    dot.innerHTML = '<div class="dot-fill" id="dotfill-' + i + '"></div>';
+    dot.style.setProperty('--dur', INTERVAL_MS + 'ms');
+    dotsEl.appendChild(dot);
+  });
+
+  // Set CSS custom property for animation duration on dots
+  document.querySelectorAll('.dot').forEach(d => d.style.setProperty('--dur', INTERVAL_MS + 'ms'));
+}
+
+function goTo(idx) {
+  const prev = current;
+  current = ((idx % MAPS.length) + MAPS.length) % MAPS.length;
+
+  // Flash
+  const flash = document.getElementById('flash');
+  flash.classList.add('on');
+  setTimeout(() => flash.classList.remove('on'), 150);
+
+  // Deactivate all
+  document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.dot').forEach(d => {
+    d.classList.remove('active');
+    // Reset fill animation
+    const fill = d.querySelector('.dot-fill');
+    fill.style.animation = 'none';
+    fill.offsetHeight; // reflow
+    fill.style.animation = '';
+  });
+
+  // Activate current
+  const slide = document.getElementById(`slide-${current}`);
+  if (slide) slide.classList.add('active');
+
+  const dot = document.getElementById(`dot-${current}`);
+  if (dot) {
+    dot.classList.add('active');
+    dot.style.setProperty('--dur', INTERVAL_MS + 'ms');
+  }
+}
+
+function startRotation() {
+  if (timer) clearInterval(timer);
+  goTo(0);
+  timer = setInterval(() => {
+    goTo(current + 1);
+  }, INTERVAL_MS);
+}
+
+// Refresh tournament info from localStorage periodically
+function refreshInfo() {
+  const S = getState();
+  MAPS.forEach((_, i) => {
+    const nameEl = document.getElementById(`ov-name-${i}`);
+    const phaseEl = document.getElementById(`ov-phase-${i}`);
+    if (nameEl) nameEl.textContent = (S.name || 'WZ CHAMPIONSHIP').toUpperCase();
+    if (phaseEl) phaseEl.textContent = (S.phase || 'MAP ROTATION').toUpperCase();
+  });
+}
+
+// ── INIT ──
+buildSlides();
+startRotation();
+setInterval(refreshInfo, 5000);
+</script>
+</body>
+</html>

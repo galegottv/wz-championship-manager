@@ -67,35 +67,48 @@ function standings(groupFilter){
     .sort((a,b)=>b.pts-a.pts||b.kills-a.kills);
 }
 
-// ── RENDER STANDINGS ──
+// ── RENDER STANDINGS (EWC Style) ──
 function renderStandings(){
   const gf=document.getElementById('standings-group-filter').value;
   const data=standings(gf);
-  const tbody=document.getElementById('standings-body');
-  tbody.innerHTML='';
-  const qualify= gf==='all' ? Math.ceil(S.teams.length*0.33) : 2;
-  const bubble = gf==='all' ? Math.ceil(S.teams.length*0.66) : 4;
-  data.forEach((t,i)=>{
+  const wrap=document.getElementById('standings-body');
+  if(!data.length){wrap.innerHTML='<div style="padding:60px;text-align:center;color:var(--text-3);font-family:var(--font-cond);font-size:14px;letter-spacing:2px;grid-column:1/-1">NENHUM TIME CADASTRADO</div>';return;}
+  const qualify=gf==='all'?Math.ceil(data.length*0.33):2;
+  const bubble=gf==='all'?Math.ceil(data.length*0.66):4;
+  wrap.innerHTML=data.map((t,i)=>{
     const pos=i+1;
-    const rowClass=pos<=qualify?'top-qualify':pos<=bubble?'mid-qualify':'eliminated';
+    const posC=pos===1?'#ffd700':pos===2?'#c0c0c0':pos===3?'#cd7f32':'var(--text-2)';
+    const posIcon=pos===1?'👑':pos===2?'🥈':pos===3?'🥉':'';
+    const borderC=pos<=qualify?'rgba(0,255,135,.25)':pos<=bubble?'rgba(255,165,0,.2)':'rgba(255,255,255,.05)';
+    const bgC=pos<=qualify?'rgba(0,255,135,.03)':pos<=bubble?'rgba(255,165,0,.03)':'transparent';
     const pill=pos<=qualify
-      ?'<span class="status-pill status-q">CLASSIFICADO</span>'
-      :pos<=bubble?'<span class="status-pill status-b">DISPUTA</span>'
-      :'<span class="status-pill status-e">ELIMINADO</span>';
-    const pc=pos===1?'pos-1':pos===2?'pos-2':pos===3?'pos-3':'pos-other';
-    tbody.innerHTML+=`<tr class="${rowClass}">
-      <td><span class="pos-badge ${pc}">${pos}</span></td>
-      <td class="td-team"><div class="team-cell">
-        <div class="team-color-bar" style="background:${t.color}"></div>
-        <span class="team-tag">${t.tag}</span>
-        <span class="team-name-cell">${t.name}</span>
-      </div></td>
-      <td><span class="section-badge" style="margin:0;padding:2px 8px">${t.group}</span></td>
-      <td class="pts-cell">${t.pts}</td>
-      <td>${t.kills}</td><td>${t.played}</td><td>${t.wins}</td><td>${t.top5}</td>
-      <td>${t.avg}</td><td>${pill}</td></tr>`;
-  });
+      ?'<span style="font-family:var(--font-cond);font-size:9px;font-weight:800;letter-spacing:2px;padding:2px 8px;border-radius:20px;background:rgba(0,255,135,.12);color:#00ff87;border:1px solid rgba(0,255,135,.25)">✓ CLASSIF.</span>'
+      :pos<=bubble
+      ?'<span style="font-family:var(--font-cond);font-size:9px;font-weight:800;letter-spacing:2px;padding:2px 8px;border-radius:20px;background:rgba(255,165,0,.12);color:#ffa500;border:1px solid rgba(255,165,0,.25)">DISPUTA</span>'
+      :'';
+    return `<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:${bgC};border:1px solid ${borderC};border-radius:10px;transition:.2s" onmouseover="this.style.borderColor='rgba(255,106,0,.3)'" onmouseout="this.style.borderColor='${borderC}'">
+      <div style="font-family:var(--font-cond);font-size:22px;font-weight:900;color:${posC};min-width:32px;text-align:center">${posIcon||pos}</div>
+      <div style="width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--font-cond);font-size:13px;font-weight:900;background:${t.color||'#ff6a00'};flex-shrink:0;color:#fff;overflow:hidden;border:2px solid rgba(255,255,255,.1)">${t.logo?`<img src="${t.logo}" style="width:100%;height:100%;object-fit:cover"/>`:t.tag.slice(0,2)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-family:var(--font-cond);font-size:15px;font-weight:900;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.name}</span>
+          <span style="font-family:var(--font-cond);font-size:10px;font-weight:700;letter-spacing:2px;color:var(--orange)">[${t.tag}]</span>
+          ${pill}
+        </div>
+        <div style="font-family:var(--font-cond);font-size:10px;letter-spacing:1px;color:var(--text-3);margin-top:2px">GRP ${t.group} &nbsp;·&nbsp; ${t.played}P &nbsp;·&nbsp; ${t.wins}V &nbsp;·&nbsp; TOP5: ${t.top5}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;margin-left:4px">
+        <div style="font-family:var(--font-cond);font-size:10px;letter-spacing:1px;color:var(--text-3)">KILLS</div>
+        <div style="font-family:var(--font-cond);font-size:16px;font-weight:900;color:var(--text-2)">${t.kills}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 16px;background:${pos===1?'rgba(255,215,0,.12)':pos<=3?'rgba(255,106,0,.1)':'rgba(255,255,255,.04)'};border-radius:8px;min-width:70px;border:1px solid ${pos===1?'rgba(255,215,0,.2)':pos<=3?'rgba(255,106,0,.2)':'rgba(255,255,255,.05)'}">
+        <div style="font-family:var(--font-cond);font-size:10px;letter-spacing:1px;color:var(--text-3)">PTS</div>
+        <div style="font-family:var(--font-cond);font-size:22px;font-weight:900;color:${pos===1?'#ffd700':pos<=3?'var(--orange)':'var(--text-1)'}">${t.pts}</div>
+      </div>
+    </div>`;
+  }).join('');
 }
+
 
 // ── RENDER GROUPS ──
 function renderGroups(){
@@ -483,6 +496,7 @@ function setupEvents(){
       if(tab==='matches') renderMatches();
       if(tab==='pontos') renderPontos(S.mode);
       if(tab==='ia') populateIaRound();
+      if(tab==='mvp') renderMVP();
     };
   });
   // multi-champ: NOVO + modal
@@ -554,6 +568,103 @@ window.copyOverlayLink=function(){
       showToast('Link copiado! Use como Browser Source no OBS.','ok');
     });
 };
+
+// ── RENDER MVP ──
+function renderMVP(){
+  const wrap = document.getElementById('mvp-body');
+  if (!wrap) return;
+
+  // Build per-team aggregated stats from match results
+  // Since we store results by team (not per player), we show team stats
+  // but display team members from the team color/logo as a visual leaderboard
+  const teamStats = S.teams.map(t => {
+    let kills=0, pts=0, played=0, wins=0, top3=0;
+    S.matches.filter(m=>m.status==='done').forEach(m=>{
+      const r=m.results.find(r=>r.teamId===t.id);
+      if(!r)return;
+      played++; kills+=r.kills;
+      pts+=getPoints(r.placement)+r.kills*KILL_PT;
+      if(r.placement===1)wins++;
+      if(r.placement<=3)top3++;
+    });
+    const kpg = played ? (kills/played).toFixed(1) : '0.0';
+    return {...t, kills, pts, played, wins, top3, kpg};
+  }).sort((a,b)=>b.kills-a.kills||b.pts-a.pts);
+
+  if (!teamStats.length) {
+    wrap.innerHTML='<div style="padding:60px;text-align:center;color:var(--text-3);font-family:var(--font-cond);font-size:14px;letter-spacing:2px">NENHUM TIME CADASTRADO</div>';
+    return;
+  }
+
+  const max = teamStats[0].kills || 1;
+  const medals = ['🥇','🥈','🥉'];
+
+  // Header
+  let html = `<div style="display:grid;grid-template-columns:40px 1fr 80px 80px 80px 80px 100px;gap:0;padding:10px 20px;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.06)">
+    <div style="font-family:var(--font-cond);font-size:10px;letter-spacing:2px;color:var(--text-3);text-align:center">#</div>
+    <div style="font-family:var(--font-cond);font-size:10px;letter-spacing:2px;color:var(--text-3)">TIME</div>
+    <div style="font-family:var(--font-cond);font-size:10px;letter-spacing:2px;color:var(--text-3);text-align:center">KILLS</div>
+    <div style="font-family:var(--font-cond);font-size:10px;letter-spacing:2px;color:var(--text-3);text-align:center">K/P</div>
+    <div style="font-family:var(--font-cond);font-size:10px;letter-spacing:2px;color:var(--text-3);text-align:center">VITÓRIAS</div>
+    <div style="font-family:var(--font-cond);font-size:10px;letter-spacing:2px;color:var(--text-3);text-align:center">TOP 3</div>
+    <div style="font-family:var(--font-cond);font-size:10px;letter-spacing:2px;color:var(--text-3);text-align:center">KILLS BAR</div>
+  </div>`;
+
+  teamStats.forEach((t, i) => {
+    const pos = i+1;
+    const isTop3 = pos<=3;
+    const medal = medals[i]||'';
+    const barW = max>0 ? Math.round((t.kills/max)*100) : 0;
+    const barColor = pos===1?'#ffd700':pos===2?'#c0c0c0':pos===3?'#cd7f32':t.color||'var(--orange)';
+    const rowBg = pos===1?'rgba(255,215,0,.04)':pos<=3?'rgba(255,106,0,.03)':'transparent';
+    const rowBorder = pos===1?'rgba(255,215,0,.15)':pos<=3?'rgba(255,106,0,.1)':'rgba(255,255,255,.04)';
+    const posColor = pos===1?'#ffd700':pos===2?'#c0c0c0':pos===3?'#cd7f32':'var(--text-3)';
+
+    html += `<div style="display:grid;grid-template-columns:40px 1fr 80px 80px 80px 80px 100px;gap:0;align-items:center;padding:14px 20px;background:${rowBg};border-bottom:1px solid ${rowBorder};transition:.2s" onmouseover="this.style.background='rgba(255,106,0,.05)'" onmouseout="this.style.background='${rowBg}'">
+      <div style="font-family:var(--font-cond);font-size:${isTop3?'20px':'14px'};font-weight:900;color:${posColor};text-align:center">${medal||pos}</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--font-cond);font-size:12px;font-weight:900;background:${t.color||'#ff6a00'};flex-shrink:0;color:#fff;overflow:hidden;border:2px solid rgba(255,255,255,.1)">${t.logo?`<img src="${t.logo}" style="width:100%;height:100%;object-fit:cover"/>`:t.tag.slice(0,2)}</div>
+        <div>
+          <div style="font-family:var(--font-cond);font-size:15px;font-weight:900;letter-spacing:1px">${t.name}</div>
+          <div style="font-family:var(--font-cond);font-size:10px;letter-spacing:2px;color:var(--orange)">[${t.tag}] · GRP ${t.group}</div>
+        </div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-family:var(--font-cond);font-size:22px;font-weight:900;color:${pos===1?'#ffd700':'var(--text-1)'}">${t.kills}</div>
+        <div style="font-family:var(--font-cond);font-size:9px;letter-spacing:1px;color:var(--text-3)">kills</div>
+      </div>
+      <div style="font-family:var(--font-cond);font-size:16px;font-weight:700;color:var(--text-2);text-align:center">${t.kpg}</div>
+      <div style="font-family:var(--font-cond);font-size:16px;font-weight:700;color:var(--green);text-align:center">${t.wins}</div>
+      <div style="font-family:var(--font-cond);font-size:16px;font-weight:700;color:var(--text-2);text-align:center">${t.top3}</div>
+      <div style="padding:0 4px">
+        <div style="height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${barW}%;background:${barColor};border-radius:3px;transition:width .6s ease"></div>
+        </div>
+        <div style="font-family:var(--font-cond);font-size:9px;letter-spacing:1px;color:var(--text-3);text-align:right;margin-top:3px">${barW}%</div>
+      </div>
+    </div>`;
+  });
+
+  // MVP highlight card
+  if (teamStats.length > 0) {
+    const mvp = teamStats[0];
+    const mvpHtml = `<div style="margin:20px 0 0 0;padding:20px;background:linear-gradient(135deg,rgba(255,215,0,.08),rgba(255,106,0,.05));border:1px solid rgba(255,215,0,.2);border-radius:10px;display:flex;align-items:center;gap:20px">
+      <div style="font-size:48px">🏆</div>
+      <div style="flex:1">
+        <div style="font-family:var(--font-cond);font-size:11px;letter-spacing:4px;color:var(--gold);margin-bottom:4px">MVP DO TORNEIO</div>
+        <div style="font-family:var(--font-cond);font-size:28px;font-weight:900;letter-spacing:1px;color:#fff">${mvp.name}</div>
+        <div style="font-family:var(--font-cond);font-size:12px;letter-spacing:2px;color:var(--text-3);margin-top:4px">[${mvp.tag}] · ${mvp.kills} kills no total · ${mvp.kpg} kills/jogo · ${mvp.wins} vitórias</div>
+      </div>
+      <div style="text-align:center;padding:16px 24px;background:rgba(255,215,0,.1);border-radius:8px;border:1px solid rgba(255,215,0,.2)">
+        <div style="font-family:var(--font-cond);font-size:42px;font-weight:900;color:var(--gold)">${mvp.kills}</div>
+        <div style="font-family:var(--font-cond);font-size:10px;letter-spacing:2px;color:var(--text-3)">TOTAL KILLS</div>
+      </div>
+    </div>`;
+    html = mvpHtml + html;
+  }
+
+  wrap.innerHTML = html;
+}
 
 // ── RENDER ALL ──
 function renderAll(){
