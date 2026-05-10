@@ -79,6 +79,46 @@ header{position:sticky;top:0;z-index:100;background:rgba(8,10,15,0.95);border-bo
 .champ-card-btn:hover{background:rgba(255,106,0,0.25)}
 .empty-state{text-align:center;padding:60px 20px;color:var(--text3);font-family:var(--font);font-size:16px;letter-spacing:2px}
 
+/* LIVE SPECTATOR PANEL */
+.live-panel{background:linear-gradient(135deg,rgba(255,106,0,.06),rgba(255,45,85,.03));border:1px solid rgba(255,106,0,.2);border-radius:14px;overflow:hidden;margin-bottom:32px;display:none}
+.live-panel.active{display:block}
+.live-panel-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:rgba(0,0,0,.25);border-bottom:1px solid rgba(255,106,0,.12)}
+.live-pulse{display:flex;align-items:center;gap:8px;font-family:var(--font);font-size:12px;font-weight:800;letter-spacing:4px;color:var(--red)}
+.live-dot-anim{width:8px;height:8px;border-radius:50%;background:var(--red);animation:pulse 1s infinite}
+.live-panel-name{font-family:var(--font);font-size:14px;font-weight:900;letter-spacing:2px;color:var(--text1)}
+.live-panel-mode{font-family:var(--font);font-size:11px;font-weight:700;letter-spacing:2px;color:var(--orange)}
+.live-panel-body{display:grid;grid-template-columns:280px 1fr;gap:0}
+@media(max-width:768px){.live-panel-body{grid-template-columns:1fr}}
+
+/* Drop info (left) */
+.live-drop-col{padding:24px;border-right:1px solid rgba(255,255,255,.05)}
+.live-drop-label{font-family:var(--font);font-size:9px;font-weight:700;letter-spacing:4px;color:var(--text3);margin-bottom:8px}
+.live-drop-num{font-family:var(--font);font-size:64px;font-weight:900;line-height:1;color:var(--orange)}
+.live-drop-of{font-family:var(--font);font-size:14px;font-weight:700;color:var(--text3)}
+.live-map-name{font-family:var(--font);font-size:22px;font-weight:900;letter-spacing:1px;margin-top:12px;color:var(--text1)}
+.live-map-mode{font-family:var(--font);font-size:11px;font-weight:700;letter-spacing:3px;color:var(--text3);margin-top:4px}
+.live-drop-dots{display:flex;gap:4px;margin-top:16px;flex-wrap:wrap}
+.ldot{width:14px;height:3px;border-radius:2px;background:rgba(255,255,255,.1);transition:all .3s}
+.ldot.done{background:rgba(0,255,135,.45)}
+.ldot.active{background:var(--orange);width:22px}
+
+/* Standings (right) */
+.live-standings-col{padding:24px}
+.live-standings-title{font-family:var(--font);font-size:11px;font-weight:700;letter-spacing:3px;color:var(--text3);margin-bottom:14px}
+.live-row{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:8px;margin-bottom:4px;transition:.2s}
+.live-row:hover{background:rgba(255,255,255,.03)}
+.live-row.r1{background:rgba(255,215,0,.05);border:1px solid rgba(255,215,0,.1)}
+.live-row.r2{background:rgba(192,192,192,.04)}
+.live-row.r3{background:rgba(205,127,50,.04)}
+.lr-pos{font-family:var(--font);font-size:16px;font-weight:900;min-width:26px;text-align:center}
+.lr-bar{width:3px;height:32px;border-radius:2px;flex-shrink:0}
+.lr-name{font-family:var(--font);font-size:14px;font-weight:900;flex:1}
+.lr-tag{font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:2px;color:var(--orange)}
+.lr-kills{font-family:var(--font);font-size:12px;font-weight:700;color:var(--text2);text-align:center;min-width:36px}
+.lr-kills-lbl{font-family:var(--font);font-size:8px;letter-spacing:1px;color:var(--text3)}
+.lr-pts{font-family:var(--font);font-size:20px;font-weight:900;min-width:50px;text-align:right}
+.live-updated{font-family:var(--font);font-size:9px;letter-spacing:2px;color:var(--text3);margin-top:12px;text-align:right}
+
 /* PLANS */
 .plans-section{padding:64px 0;background:linear-gradient(180deg,var(--bg) 0%,var(--bg1) 100%)}
 .plans-title{text-align:center;margin-bottom:12px}
@@ -156,6 +196,38 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:32px 0;m
     <div class="section-hdr">
       <div class="section-title">🔴 AO VIVO AGORA</div>
     </div>
+
+    <!-- LIVE SPECTATOR PANEL -->
+    <div class="live-panel" id="live-panel">
+      <div class="live-panel-header">
+        <div class="live-pulse"><span class="live-dot-anim"></span>AO VIVO</div>
+        <div style="text-align:center">
+          <div class="live-panel-name" id="lp-name">—</div>
+          <div class="live-panel-mode" id="lp-mode">—</div>
+        </div>
+        <a href="index.html" style="font-family:var(--font);font-size:11px;font-weight:800;letter-spacing:2px;color:var(--orange);border:1px solid rgba(255,106,0,.3);padding:6px 14px;border-radius:6px;text-decoration:none">VER COMPLETO →</a>
+      </div>
+      <div class="live-panel-body">
+        <!-- Queda atual -->
+        <div class="live-drop-col">
+          <div class="live-drop-label">QUEDA ATUAL</div>
+          <div style="display:flex;align-items:baseline;gap:6px">
+            <div class="live-drop-num" id="lp-drop-num">01</div>
+            <div class="live-drop-of" id="lp-drop-of">/5</div>
+          </div>
+          <div class="live-map-name" id="lp-map-name">—</div>
+          <div class="live-map-mode" id="lp-map-mode">—</div>
+          <div class="live-drop-dots" id="lp-dots"></div>
+        </div>
+        <!-- Standings top 5 -->
+        <div class="live-standings-col">
+          <div class="live-standings-title">CLASSIFICAÇÃO GERAL — TOP 5</div>
+          <div id="lp-standings"></div>
+          <div class="live-updated" id="lp-updated"></div>
+        </div>
+      </div>
+    </div>
+
     <div class="champs-grid" id="live-grid">
       <div class="empty-state">Nenhum campeonato ao vivo no momento</div>
     </div>
@@ -236,7 +308,93 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:32px 0;m
 
 <script>
 const API = '/api';
-const LS_KEY = 'wzc_v3';
+const LS_KEY      = 'wzc_v3';
+const LS_DROP_KEY = 'wzc_drop_index';
+
+// ── MAPS por modo (igual ao overlay) ──────────────────
+const SPEC_MAPS = {
+  resurgence: ['Rebirth Island',"Haven's Hollow",'Rebirth Praia',"Haven's Vale",'Rebirth Topo'],
+  br:         ['Verdansk','Avalon','Verdansk Norte','Avalon Centro','Verdansk Sul'],
+};
+
+// ── PONTUAÇÃO (igual ao app.js) ──────────────────────
+const KILL_PT = 1;
+function getPoints(p){
+  if(p===1)return 25;if(p===2)return 20;if(p===3)return 17;if(p===4)return 14;
+  if(p===5)return 11;if(p===6)return 9;if(p===7)return 7;if(p===8)return 5;
+  if(p<=10)return 4;if(p<=12)return 3;if(p<=15)return 2;return 1;
+}
+
+// ── RENDER LIVE PANEL ─────────────────────────────────
+function renderLivePanel() {
+  const raw = localStorage.getItem(LS_KEY);
+  if (!raw) return;
+  let S;
+  try { S = JSON.parse(raw); } catch { return; }
+  if (!S || !S.isLive) { document.getElementById('live-panel').classList.remove('active'); return; }
+
+  document.getElementById('live-panel').classList.add('active');
+
+  // Header
+  document.getElementById('lp-name').textContent = (S.name || 'WZ CHAMPIONSHIP').toUpperCase();
+  const modeLabel = S.mode === 'br' ? '💀 BATTLE ROYALE' : '🔄 RESSURGÊNCIA';
+  document.getElementById('lp-mode').textContent = modeLabel;
+
+  // Drop
+  const maps  = SPEC_MAPS[S.mode] || SPEC_MAPS.resurgence;
+  const total = maps.length;
+  const idx   = Math.max(0, Math.min(parseInt(localStorage.getItem(LS_DROP_KEY)||'0'), total-1));
+  document.getElementById('lp-drop-num').textContent = String(idx+1).padStart(2,'0');
+  document.getElementById('lp-drop-of').textContent  = `/ ${total}`;
+  document.getElementById('lp-map-name').textContent = maps[idx] || '—';
+  document.getElementById('lp-map-mode').textContent = S.mode === 'br' ? 'BATTLE ROYALE' : 'RESSURGÊNCIA';
+
+  // Dots
+  const dotsEl = document.getElementById('lp-dots');
+  dotsEl.innerHTML = maps.map((_,i) =>
+    `<div class="ldot ${i<idx?'done':i===idx?'active':''}"></div>`
+  ).join('');
+
+  // Standings top 5
+  const medals = ['🥇','🥈','🥉'];
+  const ptColors = ['#ffd700','#c0c0c0','#cd7f32'];
+  const standings = (S.teams || []).map(t => {
+    let kills=0, pts=0;
+    (S.matches||[]).filter(m=>m.status==='done').forEach(m=>{
+      const r=(m.results||[]).find(r=>r.teamId===t.id);
+      if(!r)return;
+      kills+=r.kills;
+      pts+=getPoints(r.placement)+r.kills*KILL_PT;
+    });
+    return {...t, kills, pts};
+  }).sort((a,b)=>b.pts-a.pts||b.kills-a.kills).slice(0,5);
+
+  if (!standings.length) {
+    document.getElementById('lp-standings').innerHTML = '<div style="font-family:var(--font);font-size:13px;color:var(--text3);letter-spacing:2px;padding:20px 0">AGUARDANDO RESULTADOS...</div>';
+  } else {
+    document.getElementById('lp-standings').innerHTML = standings.map((t,i) => {
+      const pos = i+1;
+      const posStr = medals[i] || pos;
+      const barColor = ptColors[i] || (t.color||'var(--orange)');
+      const rowCls = pos<=3 ? `r${pos}` : '';
+      return `<div class="live-row ${rowCls}">
+        <div class="lr-pos" style="color:${ptColors[i]||'var(--text3)'}">${posStr}</div>
+        <div class="lr-bar" style="background:${barColor}"></div>
+        <div class="lr-name">${t.name}<br><span class="lr-tag">[${t.tag}]</span></div>
+        <div class="lr-kills"><div>${t.kills}</div><div class="lr-kills-lbl">KILLS</div></div>
+        <div class="lr-pts" style="color:${ptColors[i]||'var(--text1)'}">${t.pts}<span style="font-size:10px;font-weight:600;color:var(--text3)"> pts</span></div>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('lp-updated').textContent =
+    `Atualizado: ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}`;
+}
+
+// Poll every 2s
+renderLivePanel();
+setInterval(renderLivePanel, 2000);
+window.addEventListener('storage', renderLivePanel);
 
 // Show access denied toast if redirected from index.html
 (function(){
