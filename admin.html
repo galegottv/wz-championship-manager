@@ -90,8 +90,25 @@ header{position:sticky;top:0;z-index:100;background:rgba(8,10,15,0.96);border-bo
 .act-admin:hover{background:rgba(255,106,0,0.25)}
 .act-demote{background:rgba(255,255,255,0.05);color:var(--text2);border:1px solid var(--border2)}
 .act-demote:hover{border-color:var(--red);color:var(--red)}
+.act-reset{background:rgba(79,172,254,0.1);color:var(--blue);border:1px solid rgba(79,172,254,0.25)}
+.act-reset:hover{background:rgba(79,172,254,0.22)}
 .plan-select{background:var(--bg2);border:1px solid var(--border2);color:var(--text1);font-family:var(--font);font-size:11px;padding:4px 8px;border-radius:5px;cursor:pointer;outline:none}
 .plan-select:focus{border-color:var(--orange)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-box{background:var(--bg1);border:1px solid var(--border);border-radius:14px;padding:28px;width:360px;max-width:90vw}
+.modal-box h3{font-family:var(--font);font-size:18px;font-weight:900;letter-spacing:3px;margin-bottom:16px}
+.modal-box h3 span{color:var(--blue)}
+.modal-input{width:100%;background:var(--bg2);border:1px solid var(--border2);color:var(--text1);font-family:var(--body);font-size:13px;padding:10px 14px;border-radius:8px;outline:none;margin-bottom:14px;transition:.2s}
+.modal-input:focus{border-color:var(--blue)}
+.modal-input::placeholder{color:var(--text3)}
+.modal-actions{display:flex;gap:10px}
+.modal-confirm{flex:1;font-family:var(--font);font-size:13px;font-weight:800;letter-spacing:2px;padding:10px;border-radius:7px;border:none;background:linear-gradient(135deg,#1a6fd4,var(--blue));color:#fff;cursor:pointer;transition:.2s}
+.modal-confirm:hover{transform:translateY(-1px)}
+.modal-cancel{font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:1px;padding:10px 16px;border-radius:7px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;transition:.2s}
+.modal-cancel:hover{border-color:var(--red);color:var(--red)}
+.modal-fb{font-family:var(--font);font-size:12px;letter-spacing:1px;margin-top:10px;display:none}
+.modal-fb.ok{color:var(--green);display:block}
+.modal-fb.err{color:var(--red);display:block}
 
 /* EMPTY */
 .empty-row td{text-align:center;padding:40px;font-family:var(--font);font-size:14px;letter-spacing:2px;color:var(--text3)}
@@ -256,6 +273,7 @@ function renderTable() {
     if (u.status === 'pending') actions.push(`<button class="act-btn act-approve" onclick="approveUser('${u.id}')">✓ APROVAR</button>`);
     if (u.status === 'active' && !isMe) actions.push(`<button class="act-btn act-ban" onclick="banUser('${u.id}')">🚫 BANIR</button>`);
     if (u.status === 'banned') actions.push(`<button class="act-btn act-approve" onclick="approveUser('${u.id}')">↩ REATIVAR</button>`);
+    if (!isMe) actions.push(`<button class="act-btn act-reset" onclick="openReset('${u.id}','${u.nickname}')">🔑 SENHA</button>`);
 
     if (!isMe) {
       if (u.role !== 'admin') {
@@ -323,8 +341,44 @@ async function setPlan(id, plan) {
 
 // Init
 loadUsers();
-// Auto-refresh every 30s
 setInterval(loadUsers, 30000);
+
+// ── RESET PASSWORD MODAL ──
+let resetTargetId = '';
+function openReset(id, nick) {
+  resetTargetId = id;
+  document.getElementById('reset-nick').textContent = nick;
+  document.getElementById('reset-pw').value = '';
+  document.getElementById('reset-fb').className = 'modal-fb';
+  document.getElementById('reset-modal').style.display = 'flex';
+  document.getElementById('reset-pw').focus();
+}
+function closeReset() { document.getElementById('reset-modal').style.display = 'none'; }
+async function confirmReset() {
+  const pw = document.getElementById('reset-pw').value;
+  const fb = document.getElementById('reset-fb');
+  if (!pw || pw.length < 6) { fb.textContent = 'Mínimo 6 caracteres'; fb.className='modal-fb err'; return; }
+  try {
+    const d = await api('PATCH', `/admin/users/${resetTargetId}/reset-password`, { newPassword: pw });
+    fb.textContent = d.message; fb.className='modal-fb ok';
+    toast(d.message);
+    setTimeout(closeReset, 1500);
+  } catch(e) { fb.textContent = e.message; fb.className='modal-fb err'; }
+}
 </script>
+
+<!-- RESET PASSWORD MODAL -->
+<div class="modal-overlay" id="reset-modal" style="display:none" onclick="if(event.target===this)closeReset()">
+  <div class="modal-box">
+    <h3>RESET <span>SENHA</span></h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Definir nova senha para: <strong id="reset-nick" style="color:var(--text1)"></strong></p>
+    <input type="password" class="modal-input" id="reset-pw" placeholder="Nova senha (mín. 6 caracteres)" onkeydown="if(event.key==='Enter')confirmReset()"/>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeReset()">CANCELAR</button>
+      <button class="modal-confirm" onclick="confirmReset()">🔑 REDEFINIR</button>
+    </div>
+    <div class="modal-fb" id="reset-fb"></div>
+  </div>
+</div>
 </body>
 </html>

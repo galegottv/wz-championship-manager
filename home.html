@@ -130,6 +130,7 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:32px 0;m
     </a>
     <div class="nav-links">
       <a class="nav-link" href="home.html">INÍCIO</a>
+      <a class="nav-link" href="teams.html">🛡️ TIMES</a>
       <a class="nav-link" href="#plans">PLANOS</a>
       <div id="header-auth"></div>
     </div>
@@ -265,22 +266,22 @@ function renderHeaderAuth() {
   }
 }
 
-// Load championships from localStorage
-function loadChampionships() {
-  const liveGrid = document.getElementById('live-grid');
-  const upGrid = document.getElementById('upcoming-grid');
-  const raw = localStorage.getItem(LS_KEY);
-  let champ = null;
-  try { champ = raw ? JSON.parse(raw) : null; } catch {}
-
-  const liveCards = [], upCards = [];
-  if (champ && champ.name) {
-    const card = buildCard(champ);
-    if (champ.isLive) liveCards.push(card);
-    else upCards.push(card);
+// Map banner split-screen
+function buildMapBanner(mode) {
+  if (mode === 'resurgence') {
+    return `<div style="position:absolute;inset:0;display:flex">
+      <div style="width:50%;background:url('maps/rebirth_island.png') center/cover no-repeat"></div>
+      <div style="width:50%;background:url('maps/havens_hollow.png') center/cover no-repeat"></div>
+      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.25) 0%,rgba(8,10,15,.85) 100%)"></div>
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:1px;height:70%;background:rgba(255,106,0,.3)"></div>
+    </div>`;
   }
-  if (liveCards.length) liveGrid.innerHTML = liveCards.join('');
-  if (upCards.length) upGrid.innerHTML = upCards.join('');
+  return `<div style="position:absolute;inset:0;display:flex">
+    <div style="width:50%;background:url('maps/verdansk.png') center/cover no-repeat"></div>
+    <div style="width:50%;background:url('maps/avalon.png') center/cover no-repeat"></div>
+    <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.25) 0%,rgba(8,10,15,.85) 100%)"></div>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:1px;height:70%;background:rgba(255,106,0,.3)"></div>
+  </div>`;
 }
 
 function buildCard(c) {
@@ -293,14 +294,23 @@ function buildCard(c) {
   const statusBadge = c.isLive
     ? `<div class="champ-card-live"><span style="width:6px;height:6px;border-radius:50%;background:var(--red);display:inline-block;animation:pulse 1s infinite"></span>AO VIVO</div>`
     : `<div class="champ-card-soon">📅 EM BREVE</div>`;
+  const feeBadge = c.entryFee > 0
+    ? `<div style="position:absolute;top:10px;right:10px;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.5);color:#ffd700;font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 10px;border-radius:20px">💰 R$${(c.entryFee/100).toFixed(2)}</div>`
+    : '';
   const liveBtn = c.isLive && c.liveUrl
     ? `<a href="${c.liveUrl}" target="_blank" class="champ-card-btn" style="background:rgba(255,45,85,.15);border-color:rgba(255,45,85,.4);color:var(--red)">▶ ASSISTIR</a>`
     : `<a href="index.html" class="champ-card-btn">VER STANDINGS</a>`;
+  const usr = localStorage.getItem('wzc_user');
+  const registerBtn = c.registrationsOpen
+    ? `<button class="champ-card-btn" style="background:rgba(0,255,135,.1);border-color:rgba(0,255,135,.3);color:#00ff87;margin-left:4px" onclick="openRegisterModal('${c.id||'local'}','${c.name.replace(/'/g,"\\'")}',${c.entryFee||0})">📋 INSCREVER</button>`
+    : '';
 
   return `<div class="champ-card">
     <div class="champ-card-banner">
+      ${buildMapBanner(c.mode || 'resurgence')}
       <div class="champ-card-banner-overlay"></div>
       ${statusBadge}
+      ${feeBadge}
     </div>
     <div class="champ-card-body">
       <div class="champ-card-name">${c.name}</div>
@@ -315,10 +325,52 @@ function buildCard(c) {
         <div class="cs-item"><span class="cs-val">${teams}</span><span class="cs-lbl">TIMES</span></div>
         <div class="cs-item"><span class="cs-val">${done}</span><span class="cs-lbl">PARTIDAS</span></div>
         <div class="cs-item"><span class="cs-val">${c.groups?.length||0}</span><span class="cs-lbl">GRUPOS</span></div>
-        ${liveBtn}
+        <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
+          ${liveBtn}
+          ${registerBtn}
+        </div>
       </div>
     </div>
   </div>`;
+}
+
+function openRegisterModal(champId, champName, fee) {
+  const usr = localStorage.getItem('wzc_user');
+  if (!usr) { window.location.href = 'login.html?next=teams.html'; return; }
+  // Redirect to teams page with champId pre-selected
+  window.location.href = `teams.html?register=${encodeURIComponent(champId)}&champName=${encodeURIComponent(champName)}&fee=${fee}`;
+}
+
+// Load championships from API (server-side) + localStorage fallback
+async function loadChampionships() {
+  const liveGrid = document.getElementById('live-grid');
+  const upGrid = document.getElementById('upcoming-grid');
+  let allChamps = [];
+
+  try {
+    const resp = await fetch('/api/championships');
+    if (resp.ok) allChamps = await resp.json();
+  } catch {}
+
+  // Fallback: also check localStorage
+  const raw = localStorage.getItem(LS_KEY);
+  if (raw) {
+    try {
+      const local = JSON.parse(raw);
+      if (local && local.name) allChamps.unshift(local); // local first
+    } catch {}
+  }
+
+  if (!allChamps.length) return;
+
+  const liveCards = [], upCards = [];
+  allChamps.forEach(c => {
+    const card = buildCard(c);
+    if (c.isLive) liveCards.push(card);
+    else upCards.push(card);
+  });
+  if (liveCards.length) liveGrid.innerHTML = liveCards.join('');
+  if (upCards.length) upGrid.innerHTML = upCards.join('');
 }
 
 renderHeaderAuth();

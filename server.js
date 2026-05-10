@@ -338,6 +338,364 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, file), err => { if(err) res.sendFile(path.join(__dirname,'home.html')); });
 });
 
+// ══════════════════════════════════════════════════════
+//  MULTER — upload de logos
+// ══════════════════════════════════════════════════════
+const multer = require('multer');
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${path.extname(file.originalname)}`),
+});
+const upload = multer({ storage, limits: { fileSize: 2 * 1024 * 1024 }, fileFilter: (req, file, cb) => {
+  if (!file.mimetype.startsWith('image/')) return cb(new Error('Apenas imagens'));
+  cb(null, true);
+}});
+app.use('/uploads', express.static(uploadDir));
+
+// ── DB helpers para teams/registrations (JSON) ──
+const db2 = {
+  readTeams() { const d = readDB(); return d.teams || []; },
+  writeTeams(teams) { const d = readDB(); d.teams = teams; writeDB(d); },
+  readRegs() { const d = readDB(); return d.registrations || []; },
+  writeRegs(regs) { const d = readDB(); d.registrations = regs; writeDB(d); },
+  readChamps() { const d = readDB(); return d.championships || []; },
+  writeChamps(c) { const d = readDB(); d.championships = c; writeDB(d); },
+};
+
+// TEAM LIMITS by plan
+const TEAM_MEMBER_LIMIT = { free: 5, pro: 5, elite: 7 };
+
+// ══════════════════════════════════════════════════════
+//  TEAMS ROUTES
+// ══════════════════════════════════════════════════════
+
+// GET /api/teams — lista pública
+app.get('/api/teams', (req, res) => {
+  res.json(db2.readTeams());
+});
+
+// GET /api/teams/my — meu time
+app.get('/api/teams/my', authMiddleware, (req, res) => {
+  const team = db2.readTeams().find(t => t.ownerId === req.user.id || t.members.some(m => m.userId === req.user.id));
+  res.json(team || null);
+});
+
+// POST /api/teams — criar time
+app.post('/api/teams', authMiddleware, upload.single('logo'), async (req, res) => {
+  try {
+    const teams = db2.readTeams();
+    if (teams.find(t => t.ownerId === req.user.id || t.members.some(m => m.userId === req.user.id)))
+      return res.status(409).json({ error: 'Você já pertence a um time' });
+    const { name, tag, color } = req.body;
+    if (!name || !tag) return res.status(400).json({ error: 'Nome e tag são obrigatórios' });
+    if (teams.find(t => t.tag.toLowerCase() === tag.toLowerCase())) return res.status(409).json({ error: 'Tag já em uso' });
+    const user = await db.findUser({ id: req.user.id });
+    const logo = req.file ? `/uploads/${req.file.filename}` : '';
+    const team = {
+      id: `team_${Date.now()}`,
+      name: name.trim(),
+      tag: tag.trim().toUpperCase().slice(0, 5),
+      color: color || '#ff6a00',
+      logo,
+      ownerId: req.user.id,
+      ownerNick: req.user.nickname,
+      memberLimit: TEAM_MEMBER_LIMIT[user?.plan || 'free'],
+      members: [{ userId: req.user.id, nickname: req.user.nickname, role: 'captain' }],
+      createdAt: new Date().toISOString(),
+    };
+    teams.push(team);
+    db2.writeTeams(teams);
+    res.json(team);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PATCH /api/teams/:id — editar time
+app.patch('/api/teams/:id', authMiddleware, upload.single('logo'), async (req, res) => {
+  try {
+    const teams = db2.readTeams();
+    const idx = teams.findIndex(t => t.id === req.params.id);
+    if (idx < 0) return res.status(404).json({ error: 'Time não encontrado' });
+    if (teams[idx].ownerId !== req.user.id && req.user.role !== 'admin')
+      return res.status(403).json({ error: 'Sem permissão' });
+    const { name, tag, color } = req.body;
+    if (name) teams[idx].name = name.trim();
+    if (tag) {
+      if (teams.find((t, i) => i !== idx && t.tag.toLowerCase() === tag.toLowerCase()))
+        return res.status(409).json({ error: 'Tag já em uso' });
+      teams[idx].tag = tag.trim().toUpperCase().slice(0, 5);
+    }
+    if (color) teams[idx].color = color;
+    if (req.file) teams[idx].logo = `/uploads/${req.file.filename}`;
+    db2.writeTeams(teams);
+    res.json(teams[idx]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// DELETE /api/teams/:id
+app.delete('/api/teams/:id', authMiddleware, (req, res) => {
+  const teams = db2.readTeams();
+  const team = teams.find(t => t.id === req.params.id);
+  if (!team) return res.status(404).json({ error: 'Não encontrado' });
+  if (team.ownerId !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'Sem permissão' });
+  db2.writeTeams(teams.filter(t => t.id !== req.params.id));
+  res.json({ message: 'Time excluído' });
+});
+
+// POST /api/teams/:id/members — adicionar membro
+app.post('/api/teams/:id/members', authMiddleware, async (req, res) => {
+  try {
+    const teams = db2.readTeams();
+    const idx = teams.findIndex(t => t.id === req.params.id);
+    if (idx < 0) return res.status(404).json({ error: 'Time não encontrado' });
+    if (teams[idx].ownerId !== req.user.id) return res.status(403).json({ error: 'Sem permissão' });
+    const { nickname } = req.body;
+    const target = await db.findUser({ nickname });
+    if (!target) return res.status(404).json({ error: 'Usuário não encontrado' });
+    if (teams.find(t => t.members.some(m => m.userId === target.id)))
+      return res.status(409).json({ error: `${target.nickname} já pertence a um time` });
+    const owner = await db.findUser({ id: req.user.id });
+    const limit = TEAM_MEMBER_LIMIT[owner?.plan || 'free'];
+    if (teams[idx].members.length >= limit)
+      return res.status(400).json({ error: `Limite de ${limit} membros atingido (plano ${owner?.plan || 'free'})` });
+    teams[idx].members.push({ userId: target.id, nickname: target.nickname, role: 'player' });
+    db2.writeTeams(teams);
+    res.json(teams[idx]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// DELETE /api/teams/:id/members/:userId
+app.delete('/api/teams/:id/members/:userId', authMiddleware, (req, res) => {
+  const teams = db2.readTeams();
+  const idx = teams.findIndex(t => t.id === req.params.id);
+  if (idx < 0) return res.status(404).json({ error: 'Não encontrado' });
+  if (teams[idx].ownerId !== req.user.id && req.user.role !== 'admin' && req.user.id !== req.params.userId)
+    return res.status(403).json({ error: 'Sem permissão' });
+  if (req.params.userId === teams[idx].ownerId) return res.status(400).json({ error: 'Capitão não pode sair do time' });
+  teams[idx].members = teams[idx].members.filter(m => m.userId !== req.params.userId);
+  db2.writeTeams(teams);
+  res.json(teams[idx]);
+});
+
+// ══════════════════════════════════════════════════════
+//  CHAMPIONSHIPS ROUTES (público)
+// ══════════════════════════════════════════════════════
+
+app.get('/api/championships', (req, res) => res.json(db2.readChamps()));
+
+app.post('/api/championships', authMiddleware, (req, res) => {
+  const user = req.user;
+  if (!['admin','pro','elite'].includes(user.plan) && user.role !== 'admin')
+    return res.status(403).json({ error: 'Plano PRO ou ELITE necessário' });
+  const champs = db2.readChamps();
+  const { name, mode, season, prize, entryFee, registrationsOpen } = req.body;
+  if (!name) return res.status(400).json({ error: 'Nome obrigatório' });
+  const champ = {
+    id: `champ_${Date.now()}`,
+    name, mode: mode || 'resurgence', season: season || 'Season 1',
+    prize: prize || '', entryFee: parseInt(entryFee) || 0,
+    registrationsOpen: registrationsOpen !== false,
+    ownerId: user.id, ownerNick: user.nickname,
+    createdAt: new Date().toISOString(),
+  };
+  champs.push(champ);
+  db2.writeChamps(champs);
+  res.json(champ);
+});
+
+// ══════════════════════════════════════════════════════
+//  REGISTRATIONS ROUTES
+// ══════════════════════════════════════════════════════
+
+// GET /api/championships/:id/registrations
+app.get('/api/championships/:id/registrations', (req, res) => {
+  const regs = db2.readRegs().filter(r => r.champId === req.params.id);
+  const teams = db2.readTeams();
+  res.json(regs.map(r => ({ ...r, team: teams.find(t => t.id === r.teamId) || null })));
+});
+
+// POST /api/championships/:id/register — inscrever time
+app.post('/api/championships/:id/register', authMiddleware, async (req, res) => {
+  try {
+    const champs = db2.readChamps();
+    const champ = champs.find(c => c.id === req.params.id);
+    if (!champ) return res.status(404).json({ error: 'Campeonato não encontrado' });
+    if (!champ.registrationsOpen) return res.status(400).json({ error: 'Inscrições fechadas' });
+    const teams = db2.readTeams();
+    const team = teams.find(t => t.ownerId === req.user.id || t.members.some(m => m.userId === req.user.id));
+    if (!team) return res.status(400).json({ error: 'Você não tem time. Crie um time primeiro.' });
+    const regs = db2.readRegs();
+    if (regs.find(r => r.champId === champ.id && r.teamId === team.id))
+      return res.status(409).json({ error: 'Time já inscrito neste campeonato' });
+    // Se tiver taxa, precisa pagar
+    const fee = champ.entryFee || 0;
+    const reg = {
+      id: `reg_${Date.now()}`,
+      champId: champ.id, teamId: team.id, teamName: team.name, teamTag: team.tag,
+      status: fee > 0 ? 'pending_payment' : 'approved',
+      fee, paidAt: null, createdAt: new Date().toISOString(),
+    };
+    regs.push(reg);
+    db2.writeRegs(regs);
+    if (fee > 0) {
+      // Criar sessão de pagamento
+      const base = process.env.BASE_URL || `http://localhost:${PORT}`;
+      if (stripe && req.body.method === 'stripe') {
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'], mode: 'payment',
+          line_items: [{ price_data: { currency: 'brl', product_data: { name: `Inscrição: ${champ.name} — ${team.name}` }, unit_amount: fee }, quantity: 1 }],
+          metadata: { regId: reg.id },
+          success_url: `${base}/teams.html?payment=success`,
+          cancel_url: `${base}/teams.html?payment=cancelled`,
+        });
+        return res.json({ reg, paymentUrl: session.url, method: 'stripe' });
+      }
+      if (mpClient && req.body.method === 'pix') {
+        const { Payment } = require('mercadopago');
+        const p = new Payment(mpClient);
+        const payment = await p.create({ body: {
+          transaction_amount: fee / 100,
+          description: `Inscrição: ${champ.name}`,
+          payment_method_id: 'pix',
+          payer: { email: req.user.email, first_name: req.user.nickname },
+          metadata: { regId: reg.id },
+        }});
+        const pix = payment.point_of_interaction?.transaction_data;
+        return res.json({ reg, method: 'pix', paymentId: payment.id, qr_code: pix?.qr_code, qr_code_base64: pix?.qr_code_base64, amount: fee / 100 });
+      }
+      return res.json({ reg, requiresPayment: true, fee });
+    }
+    res.json({ reg, message: 'Inscrito com sucesso!' });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PATCH /api/championships/:id/registrations/:regId — aprovar/rejeitar
+app.patch('/api/championships/:id/registrations/:regId', authMiddleware, (req, res) => {
+  const champs = db2.readChamps();
+  const champ = champs.find(c => c.id === req.params.id);
+  if (!champ) return res.status(404).json({ error: 'Campeonato não encontrado' });
+  if (champ.ownerId !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'Sem permissão' });
+  const regs = db2.readRegs();
+  const idx = regs.findIndex(r => r.id === req.params.regId);
+  if (idx < 0) return res.status(404).json({ error: 'Inscrição não encontrada' });
+  const { status } = req.body;
+  if (!['approved', 'rejected'].includes(status)) return res.status(400).json({ error: 'Status inválido' });
+  regs[idx].status = status;
+  if (status === 'approved') regs[idx].approvedAt = new Date().toISOString();
+  db2.writeRegs(regs);
+  res.json(regs[idx]);
+});
+
+// POST /api/championships/:id/teams/manual — adicionar time manualmente
+app.post('/api/championships/:id/teams/manual', authMiddleware, (req, res) => {
+  const champs = db2.readChamps();
+  const champ = champs.find(c => c.id === req.params.id);
+  if (!champ) return res.status(404).json({ error: 'Campeonato não encontrado' });
+  if (champ.ownerId !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'Sem permissão' });
+  const teams = db2.readTeams();
+  const { query } = req.body;
+  const team = teams.find(t => t.name.toLowerCase() === query?.toLowerCase() || t.tag.toLowerCase() === query?.toLowerCase());
+  if (!team) return res.status(404).json({ error: `Time "${query}" não encontrado` });
+  const regs = db2.readRegs();
+  if (regs.find(r => r.champId === champ.id && r.teamId === team.id))
+    return res.status(409).json({ error: 'Time já inscrito' });
+  const reg = {
+    id: `reg_${Date.now()}`,
+    champId: champ.id, teamId: team.id, teamName: team.name, teamTag: team.tag,
+    status: 'approved', fee: 0, paidAt: null, manual: true,
+    createdAt: new Date().toISOString(),
+  };
+  regs.push(reg);
+  db2.writeRegs(regs);
+  res.json({ reg, team });
+});
+
+// GET /api/payments/reg/pix/status/:paymentId — confirmar pagamento Pix de inscrição
+app.get('/api/payments/reg/pix/status/:paymentId', authMiddleware, async (req, res) => {
+  if (!mpClient) return res.status(503).json({ error: 'MercadoPago não configurado' });
+  try {
+    const { Payment } = require('mercadopago');
+    const p = new Payment(mpClient);
+    const payment = await p.get({ id: req.params.paymentId });
+    if (payment.status === 'approved') {
+      const regId = payment.metadata?.regId;
+      if (regId) {
+        const regs = db2.readRegs();
+        const idx = regs.findIndex(r => r.id === regId);
+        if (idx >= 0) { regs[idx].status = 'approved'; regs[idx].paidAt = new Date().toISOString(); db2.writeRegs(regs); }
+      }
+    }
+    res.json({ status: payment.status });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ══════════════════════════════════════════════════════
+//  ADMIN — RESET PASSWORD
+// ══════════════════════════════════════════════════════
+app.patch('/api/admin/users/:id/reset-password', adminOnly, async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6)
+      return res.status(400).json({ error: 'Senha mínima: 6 caracteres' });
+    const user = await db.findUser({ id: req.params.id });
+    if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await db.updateUser(req.params.id, { passwordHash });
+    res.json({ message: `Senha de ${user.nickname} redefinida com sucesso!` });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ══════════════════════════════════════════════════════
+//  AI SCORING — Gemini Vision
+// ══════════════════════════════════════════════════════
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+
+app.post('/api/ai/score-screenshot', adminOnly, upload.single('screenshot'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Nenhuma imagem enviada' });
+  if (!GEMINI_API_KEY) return res.status(503).json({ error: 'GEMINI_API_KEY não configurada' });
+
+  try {
+    const { GoogleGenerativeAI } = require('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+    const imageData = fs.readFileSync(req.file.path);
+    const base64 = imageData.toString('base64');
+    const mimeType = req.file.mimetype;
+
+    const prompt = `Analise esta imagem de resultado de partida do Call of Duty Warzone.
+Extraia os dados de cada time/jogador visível na tela de resultado.
+Retorne SOMENTE um JSON válido, sem markdown, sem explicação, no formato:
+{
+  "results": [
+    { "placement": 1, "team_name": "NOME DO TIME ou TAG", "kills": 5 },
+    { "placement": 2, "team_name": "...", "kills": 3 }
+  ]
+}
+Se não conseguir identificar algum campo, use null.
+Extraia TODOS os times/jogadores visíveis na tela.`;
+
+    const result = await model.generateContent([
+      prompt,
+      { inlineData: { mimeType, data: base64 } }
+    ]);
+
+    const text = result.response.text().trim();
+    // Remove markdown code blocks if present
+    const jsonStr = text.replace(/^```json?\n?/,'').replace(/\n?```$/,'').trim();
+    const parsed = JSON.parse(jsonStr);
+
+    // Clean up temp file
+    fs.unlink(req.file.path, () => {});
+
+    res.json(parsed);
+  } catch(e) {
+    fs.unlink(req.file?.path || '', () => {});
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ── START ──
 async function start() {
   if (MONGODB_URL) {

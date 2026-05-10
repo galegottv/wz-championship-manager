@@ -109,11 +109,12 @@
   <!-- SUB-NAV -->
   <nav class="sub-nav">
     <div class="container sub-nav-inner">
-      <a href="#" class="sub-link active" data-sub="standings">📊 STANDINGS</a>
+      <a href="#" class="sub-link" data-sub="standings">📊 STANDINGS</a>
       <a href="#" class="sub-link" data-sub="groups">👥 GRUPOS</a>
       <a href="#" class="sub-link" data-sub="matches">🎮 PARTIDAS</a>
       <a href="#" class="sub-link" data-sub="bracket">🏆 BRACKET</a>
       <a href="#" class="sub-link" data-sub="pontos">📋 PONTUAÇÃO</a>
+      <a href="#" class="sub-link sub-admin" data-sub="ia">🤖 IA SCORING</a>
       <a href="#" class="sub-link sub-admin" data-sub="setup">⚙ CONFIGURAR</a>
       <a href="#" class="sub-link sub-admin" data-sub="admin">✅ RESULTADOS</a>
     </div>
@@ -285,6 +286,41 @@
           <button class="btn-secondary" id="btn-export-json">⬇ EXPORTAR JSON</button>
           <button class="btn-secondary" id="btn-import-json">⬆ IMPORTAR JSON</button>
           <input type="file" id="import-file-input" accept=".json" style="display:none"/>
+        </div>
+      </div>
+    </section>
+
+    <!-- IA SCORING -->
+    <section class="sub-panel" id="sub-ia">
+      <div class="section-header">
+        <h2 class="section-title">🤖 IA SCORING — GEMINI VISION</h2>
+        <span class="section-badge warning">Requer GEMINI_API_KEY</span>
+      </div>
+      <div class="admin-grid">
+        <div class="admin-card">
+          <h3 class="admin-card-title">ENVIAR SCREENSHOT</h3>
+          <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;line-height:1.6">Tire um print da tela de resultados do Warzone e envie abaixo. A IA irá extrair automaticamente posições e kills de cada time.</p>
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">📸 IMAGEM DO RESULTADO</label>
+            <input type="file" class="form-control" id="ia-file" accept="image/*" onchange="iaPreview(this)"/>
+          </div>
+          <img id="ia-preview-img" style="display:none;max-width:100%;border-radius:8px;margin-bottom:14px;border:1px solid var(--border-2)"/>
+          <button class="btn-primary" id="ia-btn" onclick="iaAnalyze()">🤖 ANALISAR COM IA</button>
+          <div class="admin-feedback" id="ia-feedback" style="margin-top:10px"></div>
+        </div>
+        <div class="admin-card">
+          <h3 class="admin-card-title">RESULTADOS DETECTADOS</h3>
+          <div id="ia-results-wrap">
+            <div style="text-align:center;padding:40px 20px;font-family:var(--font-cond);font-size:13px;letter-spacing:2px;color:var(--text-3)">Envie um screenshot para começar</div>
+          </div>
+          <div id="ia-apply-wrap" style="display:none;margin-top:16px">
+            <div class="form-group" style="margin-bottom:12px">
+              <label class="form-label">RODADA</label>
+              <select class="form-control" id="ia-round"></select>
+            </div>
+            <button class="btn-primary" onclick="iaApplyResults()">✅ APLICAR RESULTADOS</button>
+            <div class="admin-feedback" id="ia-apply-fb"></div>
+          </div>
         </div>
       </div>
     </section>

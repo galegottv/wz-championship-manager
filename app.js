@@ -482,6 +482,7 @@ function setupEvents(){
       if(tab==='groups') renderGroups();
       if(tab==='matches') renderMatches();
       if(tab==='pontos') renderPontos(S.mode);
+      if(tab==='ia') populateIaRound();
     };
   });
   // multi-champ: NOVO + modal
@@ -563,3 +564,98 @@ function renderAll(){
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded',()=>{setupEvents();renderAll();});
+
+// ── IA SCORING ──
+let iaDetectedResults = [];
+
+function populateIaRound(){
+  const sel = document.getElementById('ia-round');
+  if(!sel) return;
+  sel.innerHTML = [...Array(S.rounds)].map((_,i)=>`<option value="${i+1}">Rodada ${i+1}</option>`).join('');
+}
+
+window.iaPreview = function(input){
+  const img = document.getElementById('ia-preview-img');
+  if(input.files && input.files[0]){
+    img.src = URL.createObjectURL(input.files[0]);
+    img.style.display = 'block';
+  }
+};
+
+window.iaAnalyze = async function(){
+  const file = document.getElementById('ia-file').files[0];
+  const fb = document.getElementById('ia-feedback');
+  const btn = document.getElementById('ia-btn');
+  if(!file){ fb.textContent='⚠ Selecione uma imagem'; fb.className='admin-feedback err'; return; }
+  btn.disabled = true; btn.textContent = '⏳ Analisando...';
+  fb.textContent = ''; fb.className = 'admin-feedback';
+  try {
+    const fd = new FormData();
+    fd.append('screenshot', file);
+    const token = localStorage.getItem('wzc_token');
+    const r = await fetch('/api/ai/score-screenshot', {
+      method:'POST',
+      headers:{ Authorization:`Bearer ${token}` },
+      body: fd
+    });
+    const data = await r.json();
+    if(!r.ok) throw new Error(data.error || 'Erro na IA');
+    iaDetectedResults = data.results || [];
+    renderIaResults(iaDetectedResults);
+    fb.textContent = `✓ ${iaDetectedResults.length} times detectados!`; fb.className='admin-feedback ok';
+    document.getElementById('ia-apply-wrap').style.display = 'block';
+    populateIaRound();
+  } catch(e){
+    fb.textContent = e.message; fb.className='admin-feedback err';
+    document.getElementById('ia-apply-wrap').style.display = 'none';
+  } finally {
+    btn.disabled = false; btn.textContent = '🤖 ANALISAR COM IA';
+  }
+};
+
+function renderIaResults(results){
+  const wrap = document.getElementById('ia-results-wrap');
+  if(!results.length){ wrap.innerHTML='<div style="text-align:center;padding:30px;color:var(--text-3);font-family:var(--font-cond);font-size:13px">Nenhum resultado detectado</div>'; return; }
+  wrap.innerHTML = `<table style="width:100%;border-collapse:collapse">
+    <thead><tr>
+      <th style="font-family:var(--font-cond);font-size:10px;letter-spacing:2px;color:var(--text-3);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border-subtle)">#</th>
+      <th style="font-family:var(--font-cond);font-size:10px;letter-spacing:2px;color:var(--text-3);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border-subtle)">TIME DETECTADO</th>
+      <th style="font-family:var(--font-cond);font-size:10px;letter-spacing:2px;color:var(--text-3);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border-subtle)">KILLS</th>
+      <th style="font-family:var(--font-cond);font-size:10px;letter-spacing:2px;color:var(--text-3);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border-subtle)">TIME (mapear)</th>
+    </tr></thead>
+    <tbody>${results.map((r,i)=>{
+      const teamOpts = S.teams.map(t=>`<option value="${t.id}">${t.name} (${t.tag})</option>`).join('');
+      return `<tr style="border-bottom:1px solid rgba(255,255,255,0.03)">
+        <td style="padding:8px 12px;font-family:var(--font-cond);font-size:14px;font-weight:900;color:var(--orange)">${r.placement??i+1}</td>
+        <td style="padding:8px 12px;font-family:var(--font-cond);font-size:13px">${r.team_name??'—'}</td>
+        <td style="padding:8px 12px;font-family:var(--font-cond);font-size:14px;font-weight:700">${r.kills??0}</td>
+        <td style="padding:8px 12px"><select class="form-control" id="ia-map-${i}" style="font-size:11px;padding:4px 8px"><option value="">-- selecionar --</option>${teamOpts}</select></td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+window.iaApplyResults = function(){
+  const round = parseInt(document.getElementById('ia-round').value);
+  const fb = document.getElementById('ia-apply-fb');
+  let applied = 0, skipped = 0;
+  iaDetectedResults.forEach((r, i) => {
+    const teamId = document.getElementById(`ia-map-${i}`)?.value;
+    if(!teamId){ skipped++; return; }
+    const team = S.teams.find(t=>t.id===teamId);
+    if(!team){ skipped++; return; }
+    const match = S.matches.find(m=>m.round===round && m.group===team.group);
+    if(!match){ skipped++; return; }
+    const placement = r.placement ?? (i+1);
+    const kills = r.kills ?? 0;
+    const idx = match.results.findIndex(res=>res.teamId===teamId);
+    const res = {teamId, placement, kills};
+    if(idx>=0) match.results[idx]=res; else match.results.push(res);
+    match.status = match.teamIds.every(id=>match.results.find(res=>res.teamId===id)) ? 'done' : 'live';
+    applied++;
+  });
+  save(); renderAll();
+  fb.textContent = `✓ ${applied} resultados aplicados${skipped?' ('+skipped+' ignorados)':''} — Rodada ${round}`;
+  fb.className = 'admin-feedback ok';
+  showToast(`IA: ${applied} resultados aplicados!`,'ok');
+};
+

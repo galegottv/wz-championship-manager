@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Meu Time — WZ Championship</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script>
+(function(){
+  const raw = localStorage.getItem('wzc_user');
+  if (!raw) { window.location.replace('login.html'); return; }
+  const u = JSON.parse(raw);
+  if (u.status === 'banned') window.location.replace('home.html');
+})();
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --orange:#ff6a00;--red:#ff2d55;--green:#00ff87;--gold:#ffd700;--blue:#4facfe;
+  --bg:#080a0f;--bg1:#0d1017;--bg2:#131820;--card:#111620;
+  --border:rgba(255,106,0,0.18);--border2:rgba(255,255,255,0.06);
+  --text1:#f0f2f5;--text2:#8a96a8;--text3:#4a5568;
+  --font:'Barlow Condensed',sans-serif;--body:'Barlow',sans-serif;
+}
+body{background:var(--bg);color:var(--text1);font-family:var(--body);min-height:100vh}
+a{text-decoration:none;color:inherit}
+.container{max-width:1000px;margin:0 auto;padding:0 24px}
+header{position:sticky;top:0;z-index:100;background:rgba(8,10,15,0.96);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:64px;gap:16px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo svg{width:32px;height:32px;filter:drop-shadow(0 0 8px var(--orange))}
+.logo-name{font-family:var(--font);font-size:17px;font-weight:900;letter-spacing:3px}
+.logo-sub{font-family:var(--font);font-size:8px;letter-spacing:4px;color:var(--orange);display:block}
+.nav-links{display:flex;align-items:center;gap:8px}
+.nav-link{font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--text2);padding:7px 12px;border-radius:6px;transition:.2s}
+.nav-link:hover{color:var(--orange);background:rgba(255,106,0,0.08)}
+.page{padding:40px 0 80px}
+.page-title{font-family:var(--font);font-size:32px;font-weight:900;letter-spacing:4px;margin-bottom:4px}
+.page-title span{color:var(--orange)}
+.page-sub{font-family:var(--font);font-size:12px;letter-spacing:2px;color:var(--text3);margin-bottom:32px}
+.card{background:var(--card);border:1px solid var(--border2);border-radius:14px;padding:28px;margin-bottom:24px}
+.card-title{font-family:var(--font);font-size:16px;font-weight:800;letter-spacing:3px;color:var(--orange);margin-bottom:20px;display:flex;align-items:center;gap:8px}
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-label{font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text3)}
+.form-control{background:var(--bg2);border:1px solid var(--border2);color:var(--text1);font-family:var(--body);font-size:13px;padding:10px 14px;border-radius:8px;outline:none;transition:.2s}
+.form-control:focus{border-color:var(--orange)}
+.form-control::placeholder{color:var(--text3)}
+.color-input{padding:4px 8px;height:42px;cursor:pointer}
+.btn-primary{font-family:var(--font);font-size:13px;font-weight:800;letter-spacing:2px;padding:11px 24px;border-radius:8px;border:none;background:linear-gradient(135deg,#cc5500,var(--orange));color:#fff;cursor:pointer;transition:.2s}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(255,106,0,0.35)}
+.btn-secondary{font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:1.5px;padding:9px 18px;border-radius:7px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;transition:.2s}
+.btn-secondary:hover{border-color:var(--orange);color:var(--orange)}
+.btn-danger{font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:1.5px;padding:9px 18px;border-radius:7px;border:1px solid rgba(255,45,85,0.25);background:rgba(255,45,85,0.08);color:var(--red);cursor:pointer;transition:.2s}
+.btn-danger:hover{background:rgba(255,45,85,0.18)}
+.feedback{font-family:var(--font);font-size:12px;letter-spacing:1px;padding:8px 14px;border-radius:6px;margin-top:10px;display:none}
+.feedback.ok{background:rgba(0,255,135,0.1);border:1px solid rgba(0,255,135,0.2);color:var(--green);display:block}
+.feedback.err{background:rgba(255,45,85,0.1);border:1px solid rgba(255,45,85,0.2);color:var(--red);display:block}
+.team-banner{display:flex;align-items:center;gap:20px;margin-bottom:24px;padding:20px;background:var(--bg2);border-radius:12px;border:1px solid var(--border2)}
+.team-logo{width:72px;height:72px;border-radius:12px;object-fit:cover;background:var(--bg1);display:flex;align-items:center;justify-content:center;font-family:var(--font);font-size:22px;font-weight:900;flex-shrink:0;border:2px solid var(--border2)}
+.team-info h2{font-family:var(--font);font-size:26px;font-weight:900;letter-spacing:3px}
+.team-info .tag{font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:3px;color:var(--orange);margin-bottom:4px}
+.team-info .meta{font-size:12px;color:var(--text3);margin-top:4px}
+.members-list{display:flex;flex-direction:column;gap:8px}
+.member-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--bg2);border-radius:8px;border:1px solid var(--border2)}
+.member-nick{font-family:var(--font);font-size:14px;font-weight:800;letter-spacing:1px}
+.member-role{font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:2px;padding:3px 10px;border-radius:20px}
+.role-captain{background:rgba(255,215,0,0.1);color:var(--gold);border:1px solid rgba(255,215,0,0.25)}
+.role-player{background:rgba(255,255,255,0.05);color:var(--text3);border:1px solid var(--border2)}
+.add-member-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:12px}
+.add-member-row .form-control{flex:1}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3);font-family:var(--font);font-size:14px;letter-spacing:2px}
+.empty-icon{font-size:48px;margin-bottom:16px;opacity:.4}
+.logo-preview{width:72px;height:72px;border-radius:12px;object-fit:cover;border:2px solid var(--border2);display:none}
+.toast{position:fixed;top:24px;right:24px;z-index:9999;background:rgba(0,255,135,0.12);border:1px solid rgba(0,255,135,0.25);color:var(--green);font-family:var(--font);font-size:13px;font-weight:700;letter-spacing:1px;padding:14px 22px;border-radius:10px;backdrop-filter:blur(8px);transform:translateY(-80px);opacity:0;transition:.35s cubic-bezier(.34,1.56,.64,1)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.err{background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.25);color:var(--red)}
+.limit-badge{font-family:var(--font);font-size:11px;font-weight:700;letter-spacing:1px;padding:4px 12px;border-radius:20px;background:rgba(255,106,0,0.1);color:var(--orange);border:1px solid rgba(255,106,0,0.2);margin-left:auto}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container header-inner">
+    <a class="logo" href="home.html">
+      <svg viewBox="0 0 60 60" fill="none">
+        <polygon points="30,2 56,16 56,44 30,58 4,44 4,16" stroke="#ff6a00" stroke-width="2" fill="none"/>
+        <circle cx="30" cy="30" r="12" stroke="#ff6a00" stroke-width="1.5" fill="none"/>
+        <line x1="30" y1="18" x2="30" y2="42" stroke="#ff6a00" stroke-width="1.5"/>
+        <line x1="18" y1="30" x2="42" y2="30" stroke="#ff6a00" stroke-width="1.5"/>
+        <circle cx="30" cy="30" r="3" fill="#ff6a00"/>
+      </svg>
+      <div><span class="logo-name">WZ CHAMPIONSHIP</span><span class="logo-sub">TOURNAMENT SYSTEM</span></div>
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="home.html">🏠 INÍCIO</a>
+      <a class="nav-link" href="index.html">🏆 TORNEIOS</a>
+      <a class="nav-link" href="profile.html">👤 CONTA</a>
+      <div id="hdr-pill"></div>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+  <div class="container">
+    <div class="page-title">MEU <span>TIME</span></div>
+    <div class="page-sub">GERENCIE SUA EQUIPE E INSCRIÇÕES</div>
+
+    <!-- NO TEAM VIEW -->
+    <div id="view-no-team">
+      <div class="card">
+        <div class="empty-state">
+          <div class="empty-icon">🎮</div>
+          <div style="margin-bottom:8px">VOCÊ NÃO TEM UM TIME</div>
+          <div style="font-size:12px;color:var(--text3);font-family:var(--body);font-weight:400;margin-bottom:24px">Crie seu time para participar dos campeonatos</div>
+          <button class="btn-primary" onclick="document.getElementById('view-create').style.display='block';document.getElementById('view-no-team').style.display='none'">+ CRIAR TIME</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CREATE TEAM VIEW -->
+    <div id="view-create" style="display:none">
+      <div class="card">
+        <div class="card-title">🛡 CRIAR TIME</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">NOME DO TIME *</label>
+            <input type="text" class="form-control" id="c-name" placeholder="Ex: OpTic Gaming"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">TAG (máx 5) *</label>
+            <input type="text" class="form-control" id="c-tag" maxlength="5" placeholder="OPT"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">COR DO TIME</label>
+            <input type="color" class="form-control color-input" id="c-color" value="#ff6a00"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">LOGO (PNG/JPG)</label>
+            <input type="file" class="form-control" id="c-logo" accept="image/*" onchange="previewLogo(this)"/>
+            <img id="logo-preview" class="logo-preview"/>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn-primary" onclick="createTeam()">CRIAR TIME</button>
+          <button class="btn-secondary" onclick="document.getElementById('view-create').style.display='none';document.getElementById('view-no-team').style.display='block'">CANCELAR</button>
+        </div>
+        <div class="feedback" id="c-feedback"></div>
+      </div>
+    </div>
+
+    <!-- MY TEAM VIEW -->
+    <div id="view-team" style="display:none">
+
+      <!-- Team Banner -->
+      <div class="card">
+        <div class="team-banner" id="team-banner">
+          <div class="team-logo" id="team-logo-el">?</div>
+          <div class="team-info">
+            <div class="tag" id="t-tag">TAG</div>
+            <h2 id="t-name">TIME</h2>
+            <div class="meta" id="t-meta"></div>
+          </div>
+          <div class="limit-badge" id="t-limit"></div>
+        </div>
+
+        <!-- Edit -->
+        <details style="margin-top:8px">
+          <summary style="font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:2px;color:var(--text3);cursor:pointer;padding:8px 0">⚙ EDITAR TIME</summary>
+          <div style="margin-top:16px">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">NOME</label>
+                <input type="text" class="form-control" id="e-name" placeholder="Novo nome"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">TAG</label>
+                <input type="text" class="form-control" id="e-tag" maxlength="5" placeholder="Nova tag"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">COR</label>
+                <input type="color" class="form-control color-input" id="e-color" value="#ff6a00"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">NOVO LOGO</label>
+                <input type="file" class="form-control" id="e-logo" accept="image/*"/>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px">
+              <button class="btn-primary" onclick="editTeam()">SALVAR</button>
+              <button class="btn-danger" onclick="deleteTeam()">🗑 EXCLUIR TIME</button>
+            </div>
+            <div class="feedback" id="e-feedback"></div>
+          </div>
+        </details>
+      </div>
+
+      <!-- Members -->
+      <div class="card" id="card-members">
+        <div class="card-title">👥 MEMBROS</div>
+        <div class="add-member-row" id="add-member-section">
+          <div class="form-group" style="flex:1">
+            <label class="form-label">ADICIONAR JOGADOR (nickname)</label>
+            <input type="text" class="form-control" id="m-nick" placeholder="Nickname exato do jogador"/>
+          </div>
+          <button class="btn-primary" onclick="addMember()">+ ADD</button>
+        </div>
+        <div class="feedback" id="m-feedback"></div>
+        <div class="members-list" id="members-list"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api';
+const TOKEN = () => localStorage.getItem('wzc_token');
+const ME = () => JSON.parse(localStorage.getItem('wzc_user') || '{}');
+let myTeam = null;
+
+// Header pill
+(function(){
+  const u = ME();
+  const el = document.getElementById('hdr-pill');
+  if (el && u.nickname) el.innerHTML = `<div style="display:flex;align-items:center;gap:6px;background:rgba(255,106,0,0.1);border:1px solid rgba(255,106,0,0.2);border-radius:20px;padding:5px 12px;font-family:var(--font);font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text1)"><span style="width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block"></span>${u.nickname}</div>`;
+})();
+
+function toast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function fb(id, msg, type='err') {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.className = `feedback ${type}`;
+}
+
+async function api(method, path, body, isForm) {
+  const opts = { method, headers: { Authorization: `Bearer ${TOKEN()}` } };
+  if (isForm) { opts.body = body; }
+  else if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+  const r = await fetch(`${API}${path}`, opts);
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || 'Erro');
+  return d;
+}
+
+function previewLogo(input) {
+  const prev = document.getElementById('logo-preview');
+  if (input.files && input.files[0]) {
+    prev.src = URL.createObjectURL(input.files[0]);
+    prev.style.display = 'block';
+  }
+}
+
+function renderTeam(team) {
+  myTeam = team;
+  document.getElementById('view-no-team').style.display = 'none';
+  document.getElementById('view-create').style.display = 'none';
+  document.getElementById('view-team').style.display = 'block';
+
+  const logoEl = document.getElementById('team-logo-el');
+  if (team.logo) {
+    logoEl.innerHTML = `<img src="${team.logo}" style="width:100%;height:100%;object-fit:cover;border-radius:10px"/>`;
+  } else {
+    logoEl.style.background = team.color || '#ff6a00';
+    logoEl.textContent = team.tag.slice(0,2);
+  }
+
+  document.getElementById('t-tag').textContent = `[${team.tag}]`;
+  document.getElementById('t-name').textContent = team.name;
+  document.getElementById('t-meta').textContent = `Criado em ${new Date(team.createdAt).toLocaleDateString('pt-BR')} · Capitão: ${team.ownerNick}`;
+  document.getElementById('t-limit').textContent = `${team.members.length}/${team.memberLimit} membros`;
+  document.getElementById('e-name').value = team.name;
+  document.getElementById('e-tag').value = team.tag;
+  document.getElementById('e-color').value = team.color || '#ff6a00';
+
+  const me = ME();
+  const isCaptain = team.ownerId === me.id;
+  document.getElementById('add-member-section').style.display = isCaptain ? 'flex' : 'none';
+
+  const list = document.getElementById('members-list');
+  list.innerHTML = team.members.map(m => {
+    const isOwner = m.userId === team.ownerId;
+    const canRemove = isCaptain && !isOwner;
+    const canLeave = !isCaptain && m.userId === me.id;
+    return `<div class="member-row">
+      <span class="member-nick">${m.nickname}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="member-role ${isOwner?'role-captain':'role-player'}">${isOwner?'CAPITÃO':'JOGADOR'}</span>
+        ${canRemove ? `<button class="btn-danger" style="padding:5px 10px;font-size:10px" onclick="removeMember('${m.userId}')">✕</button>` : ''}
+        ${canLeave ? `<button class="btn-secondary" style="padding:5px 10px;font-size:10px" onclick="leaveTeam('${m.userId}')">SAIR</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function loadMyTeam() {
+  try {
+    const team = await api('GET', '/teams/my');
+    if (team) { renderTeam(team); }
+    else {
+      document.getElementById('view-no-team').style.display = 'block';
+      document.getElementById('view-team').style.display = 'none';
+    }
+  } catch(e) {
+    document.getElementById('view-no-team').style.display = 'block';
+  }
+}
+
+async function createTeam() {
+  const name = document.getElementById('c-name').value.trim();
+  const tag = document.getElementById('c-tag').value.trim();
+  const color = document.getElementById('c-color').value;
+  const logoFile = document.getElementById('c-logo').files[0];
+  if (!name || !tag) return fb('c-feedback', 'Nome e tag são obrigatórios');
+  try {
+    const fd = new FormData();
+    fd.append('name', name); fd.append('tag', tag); fd.append('color', color);
+    if (logoFile) fd.append('logo', logoFile);
+    const team = await api('POST', '/teams', fd, true);
+    toast('Time criado! 🎉');
+    renderTeam(team);
+  } catch(e) { fb('c-feedback', e.message); }
+}
+
+async function editTeam() {
+  if (!myTeam) return;
+  const fd = new FormData();
+  const name = document.getElementById('e-name').value.trim();
+  const tag = document.getElementById('e-tag').value.trim();
+  const color = document.getElementById('e-color').value;
+  const logo = document.getElementById('e-logo').files[0];
+  if (name) fd.append('name', name);
+  if (tag) fd.append('tag', tag);
+  fd.append('color', color);
+  if (logo) fd.append('logo', logo);
+  try {
+    const team = await api('PATCH', `/teams/${myTeam.id}`, fd, true);
+    toast('Time atualizado!');
+    renderTeam(team);
+  } catch(e) { fb('e-feedback', e.message); }
+}
+
+async function deleteTeam() {
+  if (!myTeam || !confirm('Excluir o time permanentemente?')) return;
+  try {
+    await api('DELETE', `/teams/${myTeam.id}`);
+    myTeam = null;
+    toast('Time excluído', 'err');
+    document.getElementById('view-team').style.display = 'none';
+    document.getElementById('view-no-team').style.display = 'block';
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function addMember() {
+  const nick = document.getElementById('m-nick').value.trim();
+  if (!nick) return fb('m-feedback', 'Digite o nickname');
+  try {
+    const team = await api('POST', `/teams/${myTeam.id}/members`, { nickname: nick });
+    toast(`${nick} adicionado!`);
+    document.getElementById('m-nick').value = '';
+    renderTeam(team);
+  } catch(e) { fb('m-feedback', e.message); }
+}
+
+async function removeMember(userId) {
+  if (!confirm('Remover este membro?')) return;
+  try {
+    const team = await api('DELETE', `/teams/${myTeam.id}/members/${userId}`);
+    toast('Membro removido');
+    renderTeam(team);
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function leaveTeam(userId) {
+  if (!confirm('Sair do time?')) return;
+  try {
+    await api('DELETE', `/teams/${myTeam.id}/members/${userId}`);
+    myTeam = null;
+    toast('Você saiu do time');
+    document.getElementById('view-team').style.display = 'none';
+    document.getElementById('view-no-team').style.display = 'block';
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+loadMyTeam();
+</script>
+</body>
+</html>
