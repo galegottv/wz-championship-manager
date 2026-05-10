@@ -490,7 +490,7 @@ function setupEvents(){
       const panel=document.getElementById(`sub-${tab}`);
       if(panel) panel.classList.add('active');
       if(tab==='bracket') renderBracket();
-      if(tab==='setup') renderSetup();
+      if(tab==='setup') { renderSetup(); initMapRotationConfigurator(); }
       if(tab==='standings') renderStandings();
       if(tab==='groups') renderGroups();
       if(tab==='matches') renderMatches();
@@ -576,23 +576,44 @@ const LS_DROP = 'wzc_drop_index';
 // Mapas separados por modo — igual ao overlay-maps.html
 const ALL_DROP_MAPS = {
   resurgence: [
-    { id:'rebirth', name:'Rebirth Island', mode:'RESSURGÊNCIA' },
-    { id:'haven',   name:"Haven's Hollow", mode:'RESSURGÊNCIA' },
-    { id:'reb2',    name:'Rebirth Praia',  mode:'RESSURGÊNCIA' },
-    { id:'hav2',    name:"Haven's Vale",   mode:'RESSURGÊNCIA' },
-    { id:'reb3',    name:'Rebirth Topo',   mode:'RESSURGÊNCIA' },
+    { id:'rebirth',   name:'Rebirth Island',   mode:'RESSURGÊNCIA' },
+    { id:'haven',     name:"Haven's Hollow",    mode:'RESSURGÊNCIA' },
+    { id:'reb2',      name:'Rebirth Praia',     mode:'RESSURGÊNCIA' },
+    { id:'hav2',      name:"Haven's Vale",      mode:'RESSURGÊNCIA' },
+    { id:'reb3',      name:'Rebirth Topo',      mode:'RESSURGÊNCIA' },
+    { id:'reb4',      name:'Rebirth Centro',    mode:'RESSURGÊNCIA' },
+    { id:'hav3',      name:"Haven's Ruínas",    mode:'RESSURGÊNCIA' },
+    { id:'reb5',      name:'Rebirth Arsenal',   mode:'RESSURGÊNCIA' },
+    { id:'hav4',      name:"Haven's Cume",      mode:'RESSURGÊNCIA' },
+    { id:'reb6',      name:'Rebirth Doca',      mode:'RESSURGÊNCIA' },
   ],
   br: [
-    { id:'verdansk', name:'Verdansk',       mode:'BATTLE ROYALE' },
-    { id:'avalon',   name:'Avalon',         mode:'BATTLE ROYALE' },
-    { id:'verd2',    name:'Verdansk Norte', mode:'BATTLE ROYALE' },
-    { id:'avl2',     name:'Avalon Centro',  mode:'BATTLE ROYALE' },
-    { id:'verd3',    name:'Verdansk Sul',   mode:'BATTLE ROYALE' },
+    { id:'verdansk',  name:'Verdansk',          mode:'BATTLE ROYALE' },
+    { id:'avalon',    name:'Avalon',            mode:'BATTLE ROYALE' },
+    { id:'verd2',     name:'Verdansk Norte',    mode:'BATTLE ROYALE' },
+    { id:'avl2',      name:'Avalon Centro',     mode:'BATTLE ROYALE' },
+    { id:'verd3',     name:'Verdansk Sul',      mode:'BATTLE ROYALE' },
+    { id:'verd4',     name:'Verdansk Leste',    mode:'BATTLE ROYALE' },
+    { id:'avl3',      name:'Avalon Litoral',    mode:'BATTLE ROYALE' },
+    { id:'verd5',     name:'Verdansk Estação', mode:'BATTLE ROYALE' },
+    { id:'avl4',      name:'Avalon Industrial', mode:'BATTLE ROYALE' },
+    { id:'verd6',     name:'Verdansk Aeroporto',mode:'BATTLE ROYALE' },
   ],
 };
 
 // Retorna os mapas do modo atual do campeonato
-function getDropMaps(){ return ALL_DROP_MAPS[S.mode] || ALL_DROP_MAPS.resurgence; }
+const LS_MAP_ROT = 'wzc_map_rotation';
+
+// Returns the active map rotation for the current mode
+// Priority: custom saved rotation → default ALL_DROP_MAPS
+function getDropMaps(){
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS_MAP_ROT)||'{}');
+    const mode  = S.mode || 'resurgence';
+    if(saved[mode] && saved[mode].length > 0) return saved[mode];
+  } catch {}
+  return ALL_DROP_MAPS[S.mode] || ALL_DROP_MAPS.resurgence;
+}
 function getDropIdx(){
   const maps = getDropMaps();
   return Math.max(0, Math.min(parseInt(localStorage.getItem(LS_DROP)||'0'), maps.length-1));
@@ -794,6 +815,242 @@ function renderAll(){
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded',()=>{setupEvents();setupDropEvents();renderAll();});
+
+// ══════════════════════════════════════════════════
+// MAP ROTATION CONFIGURATOR
+// ══════════════════════════════════════════════════
+
+// All available maps per mode (complete pool)
+const MAP_POOL = {
+  resurgence: [
+    { id:'rebirth',   name:'Rebirth Island',    mode:'RESSURGÊNCIA', ac:'#00e676', desc:'A ilha da ressurgência' },
+    { id:'haven',     name:"Haven's Hollow",     mode:'RESSURGÊNCIA', ac:'#29b6f6', desc:'Floresta densa e névoa' },
+    { id:'reb2',      name:'Rebirth Praia',      mode:'RESSURGÊNCIA', ac:'#ffca28', desc:'Zona costeira quente' },
+    { id:'hav2',      name:"Haven's Vale",       mode:'RESSURGÊNCIA', ac:'#ef5350', desc:'Vale estreito e perigoso' },
+    { id:'reb3',      name:'Rebirth Topo',       mode:'RESSURGÊNCIA', ac:'#ab47bc', desc:'Alto terreno, vantagem total' },
+    { id:'reb4',      name:'Rebirth Centro',     mode:'RESSURGÊNCIA', ac:'#26c6da', desc:'Centro da ilha, caos máximo' },
+    { id:'hav3',      name:"Haven's Ruínas",     mode:'RESSURGÊNCIA', ac:'#ff7043', desc:'Ruínas antigas e cobertura' },
+    { id:'reb5',      name:'Rebirth Arsenal',    mode:'RESSURGÊNCIA', ac:'#29b6f6', desc:'Arsenal abandonado' },
+    { id:'hav4',      name:"Haven's Cume",       mode:'RESSURGÊNCIA', ac:'#8e24aa', desc:'Cume elevado' },
+    { id:'reb6',      name:'Rebirth Doca',       mode:'RESSURGÊNCIA', ac:'#0d47a1', desc:'Zona portuária' },
+    { id:'reb7',      name:'Rebirth Laboratório',mode:'RESSURGÊNCIA', ac:'#00acc1', desc:'Lab secreto — visibilidade baixa' },
+    { id:'hav5',      name:"Haven's Planície",   mode:'RESSURGÊNCIA', ac:'#7cb342', desc:'Campo aberto — foco no longo alcance' },
+  ],
+  br: [
+    { id:'verdansk',  name:'Verdansk',            mode:'BATTLE ROYALE', ac:'#4caf50', desc:'O mapa clássico' },
+    { id:'avalon',    name:'Avalon',              mode:'BATTLE ROYALE', ac:'#ff9800', desc:'Novo território — Season 3 2026' },
+    { id:'verd2',     name:'Verdansk Norte',      mode:'BATTLE ROYALE', ac:'#66bb6a', desc:'Zona norte — confronto final' },
+    { id:'avl2',      name:'Avalon Centro',       mode:'BATTLE ROYALE', ac:'#ffa726', desc:'Zona urbana — batalha intensa' },
+    { id:'verd3',     name:'Verdansk Sul',        mode:'BATTLE ROYALE', ac:'#81c784', desc:'Zona industrial — campo aberto' },
+    { id:'verd4',     name:'Verdansk Leste',      mode:'BATTLE ROYALE', ac:'#a5d6a7', desc:'Periferia leste — edifícios altos' },
+    { id:'avl3',      name:'Avalon Litoral',      mode:'BATTLE ROYALE', ac:'#ffb74d', desc:'Costa oceânica — terreno aberto' },
+    { id:'verd5',     name:'Verdansk Estação',    mode:'BATTLE ROYALE', ac:'#c8e6c9', desc:'Terminal ferroviário' },
+    { id:'avl4',      name:'Avalon Industrial',   mode:'BATTLE ROYALE', ac:'#ffe0b2', desc:'Zona industrial — fumaça e caos' },
+    { id:'verd6',     name:'Verdansk Aeroporto',  mode:'BATTLE ROYALE', ac:'#e8f5e9', desc:'Pista aberta — zona hot drop' },
+    { id:'verd7',     name:'Verdansk Bunkers',    mode:'BATTLE ROYALE', ac:'#b9f6ca', desc:'Bunkers subterrâneos' },
+    { id:'avl5',      name:'Avalon Mercado',      mode:'BATTLE ROYALE', ac:'#ffd180', desc:'Mercado central — CQC intenso' },
+  ],
+};
+
+let rotCurrentMode = 'resurgence'; // which mode tab is active in the configurator
+let rotDragId      = null;          // id of map being dragged
+
+// Load saved rotation or default
+function loadSavedRotation(mode){
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS_MAP_ROT)||'{}');
+    if(saved[mode] && saved[mode].length) return saved[mode].map(m => ({...m}));
+  } catch {}
+  // Default: first 10 maps from pool
+  return MAP_POOL[mode].slice(0,10).map(m=>({...m}));
+}
+
+// Save rotation for given mode
+function persistRotation(mode, list){
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(LS_MAP_ROT)||'{}'); } catch {}
+  saved[mode] = list;
+  localStorage.setItem(LS_MAP_ROT, JSON.stringify(saved));
+}
+
+// ── Render pool (left column) ──
+function renderMapPool(){
+  const pool   = MAP_POOL[rotCurrentMode] || [];
+  const active = loadSavedRotation(rotCurrentMode).map(m=>m.id);
+  const el     = document.getElementById('map-pool-list');
+  if(!el) return;
+  el.innerHTML = pool.map(m => {
+    const inRot = active.includes(m.id);
+    return `<div style="
+      display:flex;align-items:center;gap:10px;padding:8px 12px;
+      background:rgba(255,255,255,.04);border-radius:6px;
+      border:1px solid ${inRot?'rgba(0,255,135,.2)':'rgba(255,255,255,.06)'};
+      font-family:var(--font-cond);font-size:13px;font-weight:700;
+      letter-spacing:1px;color:${inRot?'var(--green)':'var(--text-1)'};
+      opacity:${inRot?'.5':'1'};cursor:${inRot?'default':'pointer'};
+      transition:all .2s
+    " onclick="rotAddMap('${m.id}')" title="${inRot?'Já na rotação':'Adicionar à rotação'}">
+      <span style="width:8px;height:8px;border-radius:50%;background:${m.ac};flex-shrink:0"></span>
+      <span style="flex:1">${m.name}</span>
+      <span style="font-size:10px;color:var(--text-3)">${inRot?'✓ ATIVO':'+'}  </span>
+    </div>`;
+  }).join('');
+}
+
+// ── Render rotation list (right column) ──
+function renderRotationList(){
+  const list = loadSavedRotation(rotCurrentMode);
+  const el   = document.getElementById('map-rotation-list');
+  const hint = document.getElementById('rot-empty-hint');
+  const badge= document.getElementById('rot-count-badge');
+  if(!el) return;
+
+  badge.textContent = `(${list.length} queda${list.length!==1?'s':''})`;
+  hint.style.display = list.length ? 'none' : 'block';
+
+  // Remove old map rows (keep hint)
+  el.querySelectorAll('.rot-map-row').forEach(r=>r.remove());
+
+  list.forEach((m, i) => {
+    const row = document.createElement('div');
+    row.className = 'rot-map-row';
+    row.draggable = true;
+    row.dataset.id = m.id;
+    row.dataset.idx = i;
+    row.style.cssText = `
+      display:flex;align-items:center;gap:10px;padding:8px 12px;
+      background:rgba(255,255,255,.05);border-radius:6px;
+      border:1px solid rgba(255,255,255,.08);
+      cursor:grab;font-family:var(--font-cond);font-size:13px;font-weight:700;
+      letter-spacing:1px;transition:all .2s;
+    `;
+    row.innerHTML = `
+      <span style="font-size:11px;color:var(--text-3);min-width:24px">${String(i+1).padStart(2,'0')}</span>
+      <span style="width:8px;height:8px;border-radius:50%;background:${m.ac};flex-shrink:0"></span>
+      <span style="flex:1">${m.name}</span>
+      <button onclick="rotMoveUp(${i})" style="background:none;border:none;color:var(--text-3);cursor:pointer;padding:2px 4px;font-size:14px" title="Mover para cima">↑</button>
+      <button onclick="rotMoveDown(${i})" style="background:none;border:none;color:var(--text-3);cursor:pointer;padding:2px 4px;font-size:14px" title="Mover para baixo">↓</button>
+      <button onclick="rotRemoveMap('${m.id}')" style="background:none;border:none;color:#ff4444;cursor:pointer;padding:2px 6px;font-size:14px" title="Remover">×</button>
+    `;
+    row.addEventListener('dragstart', e => { rotDragId = m.id; row.style.opacity='.4'; });
+    row.addEventListener('dragend',   e => { rotDragId = null; row.style.opacity='1'; });
+    row.addEventListener('dragover',  e => { e.preventDefault(); row.style.background='rgba(0,255,135,.08)'; });
+    row.addEventListener('dragleave', e => { row.style.background='rgba(255,255,255,.05)'; });
+    row.addEventListener('drop',      e => {
+      e.preventDefault();
+      row.style.background='rgba(255,255,255,.05)';
+      if(!rotDragId || rotDragId===m.id) return;
+      const list2 = loadSavedRotation(rotCurrentMode);
+      const fromI = list2.findIndex(x=>x.id===rotDragId);
+      const toI   = i;
+      if(fromI<0) return;
+      const [moved] = list2.splice(fromI, 1);
+      list2.splice(toI, 0, moved);
+      persistRotation(rotCurrentMode, list2);
+      renderRotationList();
+    });
+    el.appendChild(row);
+  });
+}
+
+// ── Actions ──
+window.rotAddMap = function(mapId){
+  const pool = MAP_POOL[rotCurrentMode] || [];
+  const map  = pool.find(m=>m.id===mapId);
+  if(!map) return;
+  const list = loadSavedRotation(rotCurrentMode);
+  if(list.find(m=>m.id===mapId)) return;
+  list.push({...map});
+  persistRotation(rotCurrentMode, list);
+  renderMapPool();
+  renderRotationList();
+};
+
+window.rotRemoveMap = function(mapId){
+  const list = loadSavedRotation(rotCurrentMode).filter(m=>m.id!==mapId);
+  persistRotation(rotCurrentMode, list);
+  renderMapPool();
+  renderRotationList();
+};
+
+window.rotMoveUp = function(i){
+  const list = loadSavedRotation(rotCurrentMode);
+  if(i<=0) return;
+  [list[i-1],list[i]] = [list[i],list[i-1]];
+  persistRotation(rotCurrentMode, list);
+  renderRotationList();
+};
+
+window.rotMoveDown = function(i){
+  const list = loadSavedRotation(rotCurrentMode);
+  if(i>=list.length-1) return;
+  [list[i+1],list[i]] = [list[i],list[i+1]];
+  persistRotation(rotCurrentMode, list);
+  renderRotationList();
+};
+
+window.rotDropOnList = function(e){
+  e.preventDefault();
+  if(!rotDragId) return;
+  const list = loadSavedRotation(rotCurrentMode);
+  if(list.find(m=>m.id===rotDragId)) return;
+  const pool = MAP_POOL[rotCurrentMode]||[];
+  const map  = pool.find(m=>m.id===rotDragId);
+  if(!map) return;
+  list.push({...map});
+  persistRotation(rotCurrentMode, list);
+  renderMapPool();
+  renderRotationList();
+};
+
+window.switchRotTab = function(mode){
+  rotCurrentMode = mode;
+  document.getElementById('rot-tab-resurgence').classList.toggle('active', mode==='resurgence');
+  document.getElementById('rot-tab-br').classList.toggle('active', mode==='br');
+  renderMapPool();
+  renderRotationList();
+};
+
+window.saveMapRotation = function(){
+  const list = loadSavedRotation(rotCurrentMode);
+  if(list.length === 0){
+    showToast('Adicione pelo menos 1 mapa!','');
+    return;
+  }
+  persistRotation(rotCurrentMode, list);
+  // Also update the drop panel if it's on the same mode
+  if(rotCurrentMode === (S.mode||'resurgence')) renderDropControl();
+  const fb = document.getElementById('rotation-feedback');
+  fb.textContent = `✅ Rotação de ${list.length} mapas salva!`;
+  fb.className = 'admin-feedback ok';
+  showToast(`✅ Rotação salva: ${list.length} mapas`,'ok');
+  setTimeout(()=>{ fb.textContent=''; fb.className='admin-feedback'; }, 3500);
+};
+
+window.resetMapRotation = function(){
+  if(!confirm('Restaurar rotação padrão? A rotação customizada será apagada.')) return;
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(LS_MAP_ROT)||'{}'); } catch {}
+  delete saved[rotCurrentMode];
+  localStorage.setItem(LS_MAP_ROT, JSON.stringify(saved));
+  renderMapPool();
+  renderRotationList();
+  renderDropControl();
+  const fb = document.getElementById('rotation-feedback');
+  fb.textContent = '↺ Rotação padrão restaurada';
+  fb.className = 'admin-feedback';
+  setTimeout(()=>{ fb.textContent=''; fb.className='admin-feedback'; }, 3000);
+};
+
+// Init the rotation configurator when setup tab is opened
+function initMapRotationConfigurator(){
+  // Auto-init active tab based on current tournament mode
+  rotCurrentMode = S.mode || 'resurgence';
+  document.getElementById('rot-tab-resurgence')?.classList.toggle('active', rotCurrentMode==='resurgence');
+  document.getElementById('rot-tab-br')?.classList.toggle('active', rotCurrentMode==='br');
+  renderMapPool();
+  renderRotationList();
+}
 
 // ── IA SCORING ──
 let iaDetectedResults = [];

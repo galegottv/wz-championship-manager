@@ -283,8 +283,43 @@
         <div id="teams-manage-list" class="manage-list"></div>
       </div>
 
+      <!-- ══ ROTAÇÃO DE MAPAS ══ -->
+      <div class="setup-block" id="map-rotation-block">
+        <div class="setup-block-title"><span class="setup-step-num">4</span> ROTAÇÃO DE MAPAS</div>
+        <p style="font-size:13px;color:var(--text-2);margin-bottom:18px;line-height:1.6">
+          Escolha quais mapas e em qual ordem serão jogados. Arraste para reordenar. O overlay e o painel de quedas usarão esta configuração.
+        </p>
+
+        <!-- Tabs BR / Ressurgência -->
+        <div style="display:flex;gap:8px;margin-bottom:18px" id="map-rot-mode-tabs">
+          <button class="btn-secondary active" id="rot-tab-resurgence" onclick="switchRotTab('resurgence')" style="font-size:11px;padding:6px 16px;letter-spacing:2px">🔄 RESSURGÊNCIA</button>
+          <button class="btn-secondary" id="rot-tab-br" onclick="switchRotTab('br')" style="font-size:11px;padding:6px 16px;letter-spacing:2px">💀 BATTLE ROYALE</button>
+        </div>
+
+        <!-- Available maps pool -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <div style="font-family:var(--font-cond);font-size:11px;letter-spacing:3px;color:var(--orange);margin-bottom:10px">MAPAS DISPONÍVEIS</div>
+            <div id="map-pool-list" style="display:flex;flex-direction:column;gap:6px;min-height:80px"></div>
+          </div>
+          <div>
+            <div style="font-family:var(--font-cond);font-size:11px;letter-spacing:3px;color:var(--green);margin-bottom:10px">ROTAÇÃO ATIVA <span id="rot-count-badge" style="color:var(--text-3);font-size:10px"></span></div>
+            <div id="map-rotation-list" style="display:flex;flex-direction:column;gap:6px;min-height:80px;border:1px dashed rgba(0,255,135,.15);border-radius:8px;padding:8px"
+              ondragover="event.preventDefault()" ondrop="rotDropOnList(event)">
+              <div id="rot-empty-hint" style="font-size:12px;color:var(--text-3);letter-spacing:2px;padding:12px;text-align:center">Clique + para adicionar mapas →</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap">
+          <button class="btn-primary" id="btn-save-rotation" onclick="saveMapRotation()">💾 SALVAR ROTAÇÃO</button>
+          <button class="btn-secondary" onclick="resetMapRotation()" style="font-size:11px">↺ RESTAURAR PADRÃO</button>
+          <div class="admin-feedback" id="rotation-feedback"></div>
+        </div>
+      </div>
+
       <div class="setup-block">
-        <div class="setup-block-title"><span class="setup-step-num">4</span> BACKUP</div>
+        <div class="setup-block-title"><span class="setup-step-num">5</span> BACKUP</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button class="btn-secondary" id="btn-export-json">⬇ EXPORTAR JSON</button>
           <button class="btn-secondary" id="btn-import-json">⬆ IMPORTAR JSON</button>

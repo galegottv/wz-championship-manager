@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"/>
@@ -148,36 +148,44 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:transparent;font
 <script>
 // ════════════════════════════════════════════════════
 //  WZ MAP OVERLAY — Controlado manualmente por quedas
-//  Filtra mapas pelo MODO do campeonato (resurgence | br)
-// ════════════════════════════════════════════════════
 
-const LS_STATE = 'wzc_v3';
-const LS_DROP  = 'wzc_drop_index';
-
-// ── Todos os mapas separados por modo ───────────────
-const ALL_MAPS = {
-  resurgence: [
-    { id:'rebirth',  name:'Rebirth Island', desc:'A ilha da ressurgência — ação não para',        img:'maps/rebirth_island.png', fb:'linear-gradient(135deg,#050a1e,#0a1640)', ac:'#2196f3' },
-    { id:'haven',    name:"Haven's Hollow", desc:'A nova arena — Season 1 BO7',                   img:'maps/havens_hollow.png',  fb:'linear-gradient(135deg,#0e0618,#1a0830)', ac:'#9c27b0' },
-    { id:'reb2',     name:'Rebirth Praia',  desc:'Costa leste — posições privilegiadas',          img:'maps/rebirth_island.png', fb:'linear-gradient(135deg,#040814,#081430)', ac:'#42a5f5' },
-    { id:'hav2',     name:"Haven's Vale",   desc:'Vale profundo — emboscadas inevitáveis',        img:'maps/havens_hollow.png',  fb:'linear-gradient(135deg,#0a0414,#160828)', ac:'#ab47bc' },
-    { id:'reb3',     name:'Rebirth Topo',   desc:'Altitude máxima — visão total do campo',        img:'maps/rebirth_island.png', fb:'linear-gradient(135deg,#030610,#060e24)', ac:'#64b5f6' },
-  ],
-  br: [
-    { id:'verdansk', name:'Verdansk',       desc:'O mapa clássico — de volta à guerra',           img:'maps/verdansk.png',       fb:'linear-gradient(135deg,#081408,#142810)', ac:'#4caf50' },
-    { id:'avalon',   name:'Avalon',         desc:'Novo território — Season 3 2026',               img:'maps/avalon.png',         fb:'linear-gradient(135deg,#1a0a04,#301408)', ac:'#ff9800' },
-    { id:'verd2',    name:'Verdansk Norte', desc:'Zona norte — confronto final',                  img:'maps/verdansk.png',       fb:'linear-gradient(135deg,#060c06,#0e1e08)', ac:'#66bb6a' },
-    { id:'avl2',     name:'Avalon Centro',  desc:'Zona urbana — batalha intensa',                 img:'maps/avalon.png',         fb:'linear-gradient(135deg,#180a04,#2e1206)', ac:'#ffa726' },
-    { id:'verd3',    name:'Verdansk Sul',   desc:'Zona industrial — campo aberto',                img:'maps/verdansk.png',       fb:'linear-gradient(135deg,#040804,#0c1406)', ac:'#81c784' },
   ],
 };
 
-// ── Estado ───────────────────────────────────────────
+// ══ localStorage keys ══
+const LS_STATE  = 'wzc_state';
+const LS_DROP   = 'wzc_drop_index';
+const LS_MAP_ROT= 'wzc_map_rotation';
+
+// Returns active map list: custom rotation if set, else ALL_MAPS fallback
+// Maps from app.js rotation only have id/name/mode/ac — we enrich with img/fb from ALL_MAPS
+function getActiveMaps(mode){
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS_MAP_ROT)||'{}');
+    if(saved[mode] && saved[mode].length > 0) {
+      return saved[mode].map(m => {
+        const full = (ALL_MAPS[mode]||[]).find(x=>x.id===m.id);
+        return full ? {...m, ...full} : {
+          ...m,
+          img: m.id.startsWith('verd')||m.id==='verdansk' ? 'maps/verdansk.png'
+              : m.id.startsWith('avl')||m.id==='avalon'   ? 'maps/avalon.png'
+              : m.id.startsWith('hav')                    ? 'maps/havens_hollow.png'
+              : 'maps/rebirth_island.png',
+          fb:  'linear-gradient(135deg,#050a1e,#0a1640)',
+          ac:  m.ac || '#ff6a00'
+        };
+      });
+    }
+  } catch {}
+  return ALL_MAPS[mode] || ALL_MAPS.resurgence;
+}
+
+// ══ Estado ══
 let currentIdx  = 0;
 let currentMode = '';
 let MAPS        = [];
 
-// ── Helpers ──────────────────────────────────────────
+// ══ Helpers ══
 function getState() {
   try { const r = localStorage.getItem(LS_STATE); if(r) return JSON.parse(r); } catch {}
   return { name:'WZ CHAMPIONSHIP', phase:'MAP ROTATION', mode:'resurgence', isLive:true };
@@ -186,18 +194,14 @@ function getDropIdx() {
   const v = parseInt(localStorage.getItem(LS_DROP)||'0');
   return Math.max(0, Math.min(v, MAPS.length - 1));
 }
-function modeLabel(m) { return m === 'br' ? 'BATTLE ROYALE' : 'RESSURGÊNCIA'; }
-function modeIcon(m)  { return m === 'br' ? '💀' : '🔄'; }
+function modeLabel(m) { return m === 'br' ? 'BATTLE ROYALE' : 'RESSURGENCIA'; }
+function modeIcon(m)  { return m === 'br' ? '&#x1F4A5;' : '&#x1F504;'; }
 
-// ── Build Slides (chamado ao iniciar ou mudar de modo) ─
+// ══ Build Slides ══
 function buildSlides(S) {
   const mode = S.mode || 'resurgence';
-  MAPS = ALL_MAPS[mode] || ALL_MAPS.resurgence;
+  MAPS = getActiveMaps(mode);
   currentMode = mode;
-
-  const container = document.getElementById('slides');
-  const dotsEl    = document.getElementById('map-dots');
-  container.innerHTML = '';
   dotsEl.innerHTML    = '';
 
   MAPS.forEach((m, i) => {
