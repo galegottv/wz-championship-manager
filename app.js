@@ -497,6 +497,7 @@ function setupEvents(){
       if(tab==='pontos') renderPontos(S.mode);
       if(tab==='ia') populateIaRound();
       if(tab==='mvp') renderMVP();
+      if(tab==='admin') renderDropControl();
     };
   });
   // multi-champ: NOVO + modal
@@ -562,12 +563,115 @@ window.copyOverlayLink=function(){
   const url=`${location.origin}/overlay.html`;
   navigator.clipboard.writeText(url).then(()=>showToast('Link do overlay copiado! Cole no OBS Browser Source.','ok'))
     .catch(()=>{
-      // fallback for file:// protocol
       const full=location.href.replace(/[^/]*$/,'overlay.html');
       navigator.clipboard.writeText(full);
       showToast('Link copiado! Use como Browser Source no OBS.','ok');
     });
 };
+
+// ── DROP CONTROL SYSTEM ──
+// Sincroniza com overlay-maps.html via localStorage 'wzc_drop_index'
+const LS_DROP = 'wzc_drop_index';
+
+
+// Mesma lista de mapas do overlay (deve estar sincronizada)
+const DROP_MAPS = [
+  { id:'verdansk',  name:'Verdansk',        mode:'BATTLE ROYALE' },
+  { id:'rebirth',   name:'Rebirth Island',  mode:'RESSURGÊNCIA'  },
+  { id:'avalon',    name:'Avalon',          mode:'BATTLE ROYALE' },
+  { id:'haven',     name:"Haven's Hollow",  mode:'RESSURGÊNCIA'  },
+  { id:'verd2',     name:'Verdansk Norte',  mode:'BATTLE ROYALE' },
+  { id:'reb2',      name:'Rebirth Praia',   mode:'RESSURGÊNCIA'  },
+  { id:'avl2',      name:'Avalon Centro',   mode:'BATTLE ROYALE' },
+  { id:'hav2',      name:"Haven's Vale",    mode:'RESSURGÊNCIA'  },
+  { id:'verd3',     name:'Verdansk Sul',    mode:'BATTLE ROYALE' },
+  { id:'reb3',      name:'Rebirth Topo',    mode:'RESSURGÊNCIA'  },
+];
+
+function getDropIdx(){ return Math.max(0, Math.min(parseInt(localStorage.getItem(LS_DROP)||'0'), DROP_MAPS.length-1)); }
+function setDropIdx(i){ localStorage.setItem(LS_DROP, Math.max(0, Math.min(i, DROP_MAPS.length-1))); renderDropControl(); }
+
+function renderDropControl(){
+  const idx   = getDropIdx();
+  const map   = DROP_MAPS[idx];
+  const next  = DROP_MAPS[(idx+1) % DROP_MAPS.length];
+  const total = DROP_MAPS.length;
+
+  const numEl  = document.getElementById('drop-current-num');
+  const totEl  = document.getElementById('drop-total-label');
+  const nmEl   = document.getElementById('drop-map-name');
+  const mdEl   = document.getElementById('drop-map-mode');
+  const nxEl   = document.getElementById('drop-next-name');
+  const trk    = document.getElementById('drop-dot-track');
+  const btn    = document.getElementById('btn-drop-next');
+
+  if(!numEl) return; // panel not visible
+
+  numEl.textContent  = String(idx+1).padStart(2,'0');
+  totEl.textContent  = `/ ${total}`;
+  nmEl.textContent   = map.name;
+  mdEl.textContent   = map.mode;
+  nxEl.textContent   = idx < total-1 ? next.name : '— FIM —';
+
+  // Dot track
+  if(trk){
+    trk.innerHTML = DROP_MAPS.map((_,i)=>{
+      const done = i < idx;
+      const active = i === idx;
+      return `<div style="
+        flex:1;height:4px;border-radius:2px;
+        background:${active?'var(--orange)':done?'rgba(0,255,135,.4)':'rgba(255,255,255,.1)'};
+        transition:all .3s
+      "></div>`;
+    }).join('');
+  }
+
+  // Button state
+  if(btn){
+    const isLast = idx >= total-1;
+    btn.textContent  = isLast ? '✓ ÚLTIMA QUEDA' : `▶ CONFIRMAR QUEDA ${String(idx+2).padStart(2,'0')}`;
+    btn.disabled = isLast;
+    btn.style.opacity = isLast ? '.5' : '1';
+  }
+}
+
+function setupDropEvents(){
+  // Próxima queda
+  document.getElementById('btn-drop-next')?.addEventListener('click', ()=>{
+    const cur = getDropIdx();
+    if(cur >= DROP_MAPS.length-1){ showToast('Última queda!',''); return; }
+    setDropIdx(cur+1);
+    const fb = document.getElementById('drop-feedback');
+    const map = DROP_MAPS[getDropIdx()];
+    fb.textContent = `✓ Overlay → QUEDA ${String(getDropIdx()+1).padStart(2,'0')} — ${map.name}`;
+    fb.className = 'admin-feedback ok';
+    showToast(`🗺 QUEDA ${String(getDropIdx()+1).padStart(2,'0')}: ${map.name}`,'ok');
+    setTimeout(()=>{ fb.textContent=''; fb.className='admin-feedback'; }, 4000);
+  });
+
+  // Queda anterior
+  document.getElementById('btn-drop-prev')?.addEventListener('click', ()=>{
+    const cur = getDropIdx();
+    if(cur <= 0){ showToast('Já está na primeira queda!',''); return; }
+    setDropIdx(cur-1);
+    const map = DROP_MAPS[getDropIdx()];
+    showToast(`◀ Voltou → QUEDA ${String(getDropIdx()+1).padStart(2,'0')}: ${map.name}`,'');
+  });
+
+  // Reset
+  document.getElementById('btn-drop-reset')?.addEventListener('click', ()=>{
+    if(!confirm('Resetar para a QUEDA 01?')) return;
+    setDropIdx(0);
+    const fb = document.getElementById('drop-feedback');
+    fb.textContent = '↺ Resetado para Queda 01';
+    fb.className = 'admin-feedback ok';
+    showToast('Overlay resetado para Queda 01','ok');
+    setTimeout(()=>{ fb.textContent=''; fb.className='admin-feedback'; }, 3000);
+  });
+
+  // Init display
+  renderDropControl();
+}
 
 // ── RENDER MVP ──
 function renderMVP(){
@@ -674,7 +778,7 @@ function renderAll(){
 }
 
 // ── INIT ──
-document.addEventListener('DOMContentLoaded',()=>{setupEvents();renderAll();});
+document.addEventListener('DOMContentLoaded',()=>{setupEvents();setupDropEvents();renderAll();});
 
 // ── IA SCORING ──
 let iaDetectedResults = [];
