@@ -356,39 +356,7 @@ app.post('/api/setup', async (req, res) => {
 });
 
 
-// ── Clean URL routing ──
-// Root → home
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
 
-// Maps clean slugs to HTML files
-const PAGE_MAP = {
-  'home':         'home.html',
-  'login':        'login.html',
-  'index':        'index.html',
-  'teams':        'teams.html',
-  'admin':        'admin.html',
-  'overlay':      'overlay.html',
-  'overlay-maps': 'overlay-maps.html',
-  'profile':      'profile.html',
-};
-
-app.get('*', (req, res) => {
-  if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/')) {
-    return res.status(404).json({ error: 'Not found' });
-  }
-  // Serve as-is if already has extension (backwards compat)
-  if (req.path.match(/\.[a-z]+$/i)) {
-    return res.sendFile(path.join(__dirname, req.path.slice(1)), err => {
-      if (err) res.sendFile(path.join(__dirname, 'home.html'));
-    });
-  }
-  // Clean URL: /login → login.html
-  const slug = req.path.slice(1).toLowerCase();
-  const file = PAGE_MAP[slug] || (slug + '.html');
-  res.sendFile(path.join(__dirname, file), err => {
-    if (err) res.sendFile(path.join(__dirname, 'home.html'));
-  });
-});
 
 
 // ══════════════════════════════════════════════════════
@@ -828,6 +796,39 @@ async function start() {
   } else {
     console.log('  ℹ MONGODB_URL não definido — usando db.json local');
   }
+// ── Clean URL routing ──
+// Root → home
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
+
+// Maps clean slugs to HTML files
+const PAGE_MAP = {
+  'home':         'home.html',
+  'login':        'login.html',
+  'index':        'index.html',
+  'teams':        'teams.html',
+  'admin':        'admin.html',
+  'overlay':      'overlay.html',
+  'overlay-maps': 'overlay-maps.html',
+  'profile':      'profile.html',
+};
+
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/')) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  // Serve as-is if already has extension (backwards compat)
+  if (req.path.match(/\.[a-z]+$/i)) {
+    return res.sendFile(path.join(__dirname, req.path.slice(1)), err => {
+      if (err) res.sendFile(path.join(__dirname, 'home.html'));
+    });
+  }
+  // Clean URL: /login → login.html
+  const slug = req.path.slice(1).toLowerCase();
+  const file = PAGE_MAP[slug] || (slug + '.html');
+  res.sendFile(path.join(__dirname, file), err => {
+    if (err) res.sendFile(path.join(__dirname, 'home.html'));
+  });
+});
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n  ╔══════════════════════════════════════════╗`);
     console.log(`  ║   WZ Championship Manager — v5.1        ║`);
