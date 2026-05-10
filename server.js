@@ -850,6 +850,7 @@ const PAGE_MAP = {
   'overlay':      'overlay.html',
   'overlay-maps': 'overlay-maps.html',
   'profile':      'profile.html',
+  'tournaments':  'tournaments.html',
 };
 
 app.get('*', (req, res) => {

@@ -515,6 +515,8 @@ function setupEvents(){
     S.description=document.getElementById('cfg-description').value.trim()||'';
     const regOpenEl = document.getElementById('cfg-registrations-open');
     if(regOpenEl) S.registrationsOpen = regOpenEl.checked;
+    const feeEl = document.getElementById('cfg-entry-fee');
+    if(feeEl) S.entryFee = Math.round((parseFloat(feeEl.value)||0)*100);
     save();renderAll();
     syncChampToAPI();
     document.getElementById('info-feedback').textContent='✓ Salvo!';
@@ -978,7 +980,31 @@ function renderMVP(){
 
 // ── RENDER ALL ──
 function renderAll(){
-  renderHero();renderSetup();
+  // Auto-load champ selected from tournaments.html
+(async()=>{
+  const loadId = localStorage.getItem('wzc_admin_load_champ');
+  if(loadId){
+    localStorage.removeItem('wzc_admin_load_champ');
+    try{
+      const resp=await fetch('/api/championships');
+      const champs=resp.ok?await resp.json():[];
+      const chosen=champs.find(c=>c.id===loadId);
+      if(chosen){
+        S=blank();
+        S.name=chosen.name;S.season=chosen.season||'';S.prize=chosen.prize||'';
+        S.mode=chosen.mode||'resurgence';S.scheduledAt=chosen.scheduledAt||'';
+        S.description=chosen.description||'';S.registrationsOpen=chosen.registrationsOpen;
+        S.liveUrl=chosen.liveUrl||'';S.isLive=chosen.isLive||false;
+        S.apiId=chosen.id;S.entryFee=chosen.entryFee||0;
+        save();renderAll();
+        document.getElementById('empty-screen').style.display='none';
+        document.getElementById('champ-view').style.display='block';
+        showToast('Campeonato carregado!','ok');
+      }
+    }catch(e){console.warn(e)}
+  }
+})();
+renderHero();renderSetup();
 initAdminChampLoader();
   renderStandings();renderGroups();renderMatches();
   renderPontos(S.mode);

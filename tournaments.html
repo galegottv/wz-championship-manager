@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Torneios — WZ Championship</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Barlow:wght@400;600&display=swap" rel="stylesheet"/>
+<script>(function(){
+  const u=JSON.parse(localStorage.getItem('wzc_user')||'{}');
+  if(!u.id) window.location.replace('login');
+  if(u.role!=='admin') window.location.replace('home');
+})();</script>
+<style>
+:root{
+  --bg:#080c12;--card:#0d1118;--border:rgba(255,255,255,.07);
+  --orange:#ff6a00;--green:#00ff87;--red:#ff2d55;--gold:#ffd700;
+  --text1:#e2e8f0;--text2:#94a3b8;--text3:#4a5568;
+  --font:'Barlow Condensed',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text1);font-family:'Barlow',sans-serif;min-height:100vh}
+a{text-decoration:none;color:inherit}
+
+/* NAV */
+header{background:rgba(8,12,18,.95);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+.nav{max-width:1280px;margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:10px;font-family:var(--font);font-weight:900;font-size:16px;letter-spacing:3px}
+.logo-hex{width:32px;height:32px;background:linear-gradient(135deg,#ff6a00,#cc5500);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.nav-links{display:flex;align-items:center;gap:8px}
+.nav-link{font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--text2);padding:6px 14px;border-radius:6px;transition:.2s}
+.nav-link:hover,.nav-link.active{color:var(--orange);background:rgba(255,106,0,.08)}
+.admin-badge{background:rgba(255,106,0,.15);border:1px solid rgba(255,106,0,.3);color:var(--orange);font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:2px;padding:4px 10px;border-radius:20px}
+
+/* PAGE */
+.page{max-width:1280px;margin:0 auto;padding:32px 24px}
+.page-header{margin-bottom:32px}
+.page-title{font-family:var(--font);font-size:32px;font-weight:900;letter-spacing:4px;margin-bottom:6px}
+.page-title span{color:var(--orange)}
+.page-sub{font-family:var(--font);font-size:13px;letter-spacing:2px;color:var(--text2)}
+
+/* SEARCH BAR */
+.search-bar{display:flex;gap:12px;margin-bottom:28px;flex-wrap:wrap}
+.search-input{flex:1;min-width:240px;background:var(--card);border:1px solid var(--border);color:var(--text1);font-family:var(--font);font-size:14px;letter-spacing:1px;padding:12px 18px;border-radius:10px;outline:none;transition:.2s}
+.search-input:focus{border-color:rgba(255,106,0,.4);box-shadow:0 0 0 3px rgba(255,106,0,.08)}
+.search-input::placeholder{color:var(--text3)}
+.filter-select{background:var(--card);border:1px solid var(--border);color:var(--text1);font-family:var(--font);font-size:13px;letter-spacing:1px;padding:12px 16px;border-radius:10px;outline:none;cursor:pointer}
+.btn-new{background:linear-gradient(135deg,var(--orange),#cc5500);color:#fff;font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:2px;padding:12px 20px;border-radius:10px;border:none;cursor:pointer;white-space:nowrap;transition:.2s}
+.btn-new:hover{filter:brightness(1.12);box-shadow:0 0 20px rgba(255,106,0,.3)}
+
+/* STATS */
+.stats-row{display:flex;gap:16px;margin-bottom:28px;flex-wrap:wrap}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 24px;flex:1;min-width:120px}
+.stat-val{font-family:var(--font);font-size:28px;font-weight:900;color:var(--orange)}
+.stat-lbl{font-family:var(--font);font-size:10px;letter-spacing:3px;color:var(--text2);margin-top:2px}
+
+/* TABLE */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.table-head{display:grid;grid-template-columns:2fr 1.2fr 1fr 1fr 1fr 1fr 120px;gap:0;background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);padding:10px 20px;font-family:var(--font);font-size:10px;letter-spacing:3px;color:var(--text3)}
+.champ-row{display:grid;grid-template-columns:2fr 1.2fr 1fr 1fr 1fr 1fr 120px;gap:0;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.04);align-items:center;transition:.15s}
+.champ-row:last-child{border-bottom:none}
+.champ-row:hover{background:rgba(255,255,255,.02)}
+.champ-name-cell{display:flex;flex-direction:column;gap:3px}
+.champ-name{font-family:var(--font);font-size:15px;font-weight:700;letter-spacing:1px}
+.champ-mode{font-size:10px;letter-spacing:2px;color:var(--text3)}
+.owner-cell{display:flex;align-items:center;gap:8px}
+.owner-avatar{width:28px;height:28px;border-radius:6px;background:rgba(255,106,0,.15);border:1px solid rgba(255,106,0,.2);display:flex;align-items:center;justify-content:center;font-family:var(--font);font-size:11px;font-weight:700;color:var(--orange);flex-shrink:0}
+.owner-nick{font-family:var(--font);font-size:12px;letter-spacing:1px;color:var(--text2)}
+.badge{font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:2px;padding:3px 10px;border-radius:20px;border:1px solid;display:inline-flex;align-items:center;gap:4px}
+.badge-live{background:rgba(255,45,85,.15);border-color:rgba(255,45,85,.4);color:var(--red)}
+.badge-soon{background:rgba(255,215,0,.1);border-color:rgba(255,215,0,.3);color:var(--gold)}
+.badge-closed{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1);color:var(--text3)}
+.badge-open{background:rgba(0,255,135,.08);border-color:rgba(0,255,135,.25);color:var(--green)}
+.fee-cell{font-family:var(--font);font-size:13px;font-weight:700}
+.fee-free{color:var(--text3)}
+.fee-paid{color:var(--gold)}
+.regs-cell{font-family:var(--font);font-size:14px;font-weight:700;color:var(--text1)}
+.actions-cell{display:flex;gap:6px}
+.btn-sm{font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:1px;padding:5px 12px;border-radius:6px;border:1px solid;cursor:pointer;transition:.15s;background:transparent}
+.btn-manage{border-color:rgba(255,106,0,.3);color:var(--orange)}
+.btn-manage:hover{background:rgba(255,106,0,.12)}
+.btn-del{border-color:rgba(255,45,85,.3);color:var(--red)}
+.btn-del:hover{background:rgba(255,45,85,.1)}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3);font-family:var(--font);font-size:14px;letter-spacing:2px}
+
+/* MOBILE */
+@media(max-width:900px){
+  .table-head{display:none}
+  .champ-row{grid-template-columns:1fr 1fr;gap:8px;padding:16px}
+  .actions-cell{grid-column:1/-1}
+}
+
+/* LOADING */
+.loading{display:flex;align-items:center;justify-content:center;gap:12px;padding:60px;color:var(--text2);font-family:var(--font);font-size:12px;letter-spacing:3px}
+.spin{width:24px;height:24px;border:2px solid rgba(255,106,0,.15);border-top-color:var(--orange);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <a href="home" class="logo">
+      <div class="logo-hex">⬡</div>
+      <div><div>WZ CHAMPIONSHIP</div></div>
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="home">🏠 INÍCIO</a>
+      <a class="nav-link active" href="tournaments">🏆 TORNEIOS</a>
+      <a class="nav-link" href="admin">👤 ADMIN</a>
+      <a class="nav-link" href="profile">⚙ CONTA</a>
+      <span class="admin-badge">🛡 ADMIN</span>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+  <div class="page-header">
+    <div class="page-title">TORNEIOS <span>WZ</span></div>
+    <div class="page-sub">GESTÃO DE CAMPEONATOS — VISÃO ADMIN</div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card"><div class="stat-val" id="st-total">—</div><div class="stat-lbl">TOTAL</div></div>
+    <div class="stat-card"><div class="stat-val" id="st-live">—</div><div class="stat-lbl">AO VIVO</div></div>
+    <div class="stat-card"><div class="stat-val" id="st-open">—</div><div class="stat-lbl">INSCRIÇÕES ABERTAS</div></div>
+    <div class="stat-card"><div class="stat-val" id="st-paid">—</div><div class="stat-lbl">PAGOS</div></div>
+    <div class="stat-card"><div class="stat-val" id="st-regs">—</div><div class="stat-lbl">INSCRIÇÕES</div></div>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-bar">
+    <input class="search-input" id="srch" placeholder="🔍  Buscar por nome do camp. ou nickname do dono..." oninput="filterChamps()"/>
+    <select class="filter-select" id="filter-status" onchange="filterChamps()">
+      <option value="">Todos os status</option>
+      <option value="live">🔴 Ao Vivo</option>
+      <option value="open">🟢 Inscrições Abertas</option>
+      <option value="paid">💰 Pagos</option>
+      <option value="closed">⬛ Encerrados</option>
+    </select>
+    <button class="btn-new" onclick="window.location.href='index'">+ NOVO CAMPEONATO</button>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrap">
+    <div class="table-head">
+      <div>CAMPEONATO</div>
+      <div>DONO</div>
+      <div>STATUS</div>
+      <div>INSCRIÇÕES</div>
+      <div>TAXA</div>
+      <div>DATA</div>
+      <div>AÇÕES</div>
+    </div>
+    <div id="champ-list"><div class="loading"><div class="spin"></div>CARREGANDO...</div></div>
+  </div>
+</div>
+
+<script>
+const TOKEN = ()=> localStorage.getItem('wzc_token');
+let ALL_CHAMPS = [];
+
+async function loadChamps() {
+  try {
+    const resp = await fetch('/api/championships');
+    ALL_CHAMPS = resp.ok ? await resp.json() : [];
+    updateStats();
+    filterChamps();
+  } catch(e) {
+    document.getElementById('champ-list').innerHTML = `<div class="empty-state">Erro ao carregar: ${e.message}</div>`;
+  }
+}
+
+function updateStats() {
+  document.getElementById('st-total').textContent = ALL_CHAMPS.length;
+  document.getElementById('st-live').textContent  = ALL_CHAMPS.filter(c=>c.isLive).length;
+  document.getElementById('st-open').textContent  = ALL_CHAMPS.filter(c=>c.registrationsOpen).length;
+  document.getElementById('st-paid').textContent  = ALL_CHAMPS.filter(c=>c.entryFee>0).length;
+  document.getElementById('st-regs').textContent  = ALL_CHAMPS.reduce((a,c)=>(a+(c.registrationCount||0)),0);
+}
+
+function filterChamps() {
+  const q  = document.getElementById('srch').value.toLowerCase().trim();
+  const st = document.getElementById('filter-status').value;
+  let list = ALL_CHAMPS;
+  if (q) list = list.filter(c =>
+    c.name?.toLowerCase().includes(q) ||
+    c.ownerNick?.toLowerCase().includes(q)
+  );
+  if (st === 'live')   list = list.filter(c => c.isLive);
+  if (st === 'open')   list = list.filter(c => c.registrationsOpen && !c.isLive);
+  if (st === 'paid')   list = list.filter(c => c.entryFee > 0);
+  if (st === 'closed') list = list.filter(c => !c.registrationsOpen && !c.isLive);
+  renderList(list);
+}
+
+function renderList(list) {
+  const el = document.getElementById('champ-list');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-state">Nenhum campeonato encontrado</div>';
+    return;
+  }
+  el.innerHTML = list.map(c => {
+    const statusBadge = c.isLive
+      ? `<span class="badge badge-live">● AO VIVO</span>`
+      : c.registrationsOpen
+        ? `<span class="badge badge-open">✔ ABERTO</span>`
+        : `<span class="badge badge-closed">⬛ FECHADO</span>`;
+    const feeBadge = c.entryFee > 0
+      ? `<span class="fee-cell fee-paid">💰 R$ ${(c.entryFee/100).toFixed(2)}</span>`
+      : `<span class="fee-cell fee-free">GRÁTIS</span>`;
+    const date = c.scheduledAt
+      ? new Date(c.scheduledAt).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})
+      : c.createdAt ? new Date(c.createdAt).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '—';
+    const modeLabel = c.mode === 'br' ? '☠ Battle Royale' : '🔄 Ressurgência';
+    const ownerInitial = (c.ownerNick||'?').charAt(0).toUpperCase();
+    return `<div class="champ-row">
+      <div class="champ-name-cell">
+        <div class="champ-name">${c.name||'—'}</div>
+        <div class="champ-mode">${modeLabel} · ${c.season||''}</div>
+      </div>
+      <div class="owner-cell">
+        <div class="owner-avatar">${ownerInitial}</div>
+        <div class="owner-nick">${c.ownerNick||c.ownerId||'—'}</div>
+      </div>
+      <div>${statusBadge}</div>
+      <div class="regs-cell">${c.registrationCount||0} times</div>
+      <div>${feeBadge}</div>
+      <div style="font-family:var(--font);font-size:11px;color:var(--text2);letter-spacing:1px">${date}</div>
+      <div class="actions-cell">
+        <button class="btn-sm btn-manage" onclick="manageChamp('${c.id}')">⚙ GERIR</button>
+        <button class="btn-sm btn-del" onclick="deleteChamp('${c.id}','${(c.name||'').replace(/'/g,\"\\\\'\")}')"">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function manageChamp(id) {
+  // Store which championship to load in admin panel
+  localStorage.setItem('wzc_admin_load_champ', id);
+  window.location.href = 'index';
+}
+
+async function deleteChamp(id, name) {
+  if (!confirm(`Excluir "${name}" permanentemente?`)) return;
+  try {
+    const r = await fetch(`/api/championships/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${TOKEN()}` }
+    });
+    if (r.ok) {
+      ALL_CHAMPS = ALL_CHAMPS.filter(c => c.id !== id);
+      updateStats(); filterChamps();
+    } else {
+      const d = await r.json();
+      alert(d.error || 'Erro ao excluir');
+    }
+  } catch(e) { alert(e.message); }
+}
+
+loadChamps();
+</script>
+</body>
+</html>
