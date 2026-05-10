@@ -573,63 +573,72 @@ window.copyOverlayLink=function(){
 // Sincroniza com overlay-maps.html via localStorage 'wzc_drop_index'
 const LS_DROP = 'wzc_drop_index';
 
+// Mapas separados por modo — igual ao overlay-maps.html
+const ALL_DROP_MAPS = {
+  resurgence: [
+    { id:'rebirth', name:'Rebirth Island', mode:'RESSURGÊNCIA' },
+    { id:'haven',   name:"Haven's Hollow", mode:'RESSURGÊNCIA' },
+    { id:'reb2',    name:'Rebirth Praia',  mode:'RESSURGÊNCIA' },
+    { id:'hav2',    name:"Haven's Vale",   mode:'RESSURGÊNCIA' },
+    { id:'reb3',    name:'Rebirth Topo',   mode:'RESSURGÊNCIA' },
+  ],
+  br: [
+    { id:'verdansk', name:'Verdansk',       mode:'BATTLE ROYALE' },
+    { id:'avalon',   name:'Avalon',         mode:'BATTLE ROYALE' },
+    { id:'verd2',    name:'Verdansk Norte', mode:'BATTLE ROYALE' },
+    { id:'avl2',     name:'Avalon Centro',  mode:'BATTLE ROYALE' },
+    { id:'verd3',    name:'Verdansk Sul',   mode:'BATTLE ROYALE' },
+  ],
+};
 
-// Mesma lista de mapas do overlay (deve estar sincronizada)
-const DROP_MAPS = [
-  { id:'verdansk',  name:'Verdansk',        mode:'BATTLE ROYALE' },
-  { id:'rebirth',   name:'Rebirth Island',  mode:'RESSURGÊNCIA'  },
-  { id:'avalon',    name:'Avalon',          mode:'BATTLE ROYALE' },
-  { id:'haven',     name:"Haven's Hollow",  mode:'RESSURGÊNCIA'  },
-  { id:'verd2',     name:'Verdansk Norte',  mode:'BATTLE ROYALE' },
-  { id:'reb2',      name:'Rebirth Praia',   mode:'RESSURGÊNCIA'  },
-  { id:'avl2',      name:'Avalon Centro',   mode:'BATTLE ROYALE' },
-  { id:'hav2',      name:"Haven's Vale",    mode:'RESSURGÊNCIA'  },
-  { id:'verd3',     name:'Verdansk Sul',    mode:'BATTLE ROYALE' },
-  { id:'reb3',      name:'Rebirth Topo',    mode:'RESSURGÊNCIA'  },
-];
-
-function getDropIdx(){ return Math.max(0, Math.min(parseInt(localStorage.getItem(LS_DROP)||'0'), DROP_MAPS.length-1)); }
-function setDropIdx(i){ localStorage.setItem(LS_DROP, Math.max(0, Math.min(i, DROP_MAPS.length-1))); renderDropControl(); }
+// Retorna os mapas do modo atual do campeonato
+function getDropMaps(){ return ALL_DROP_MAPS[S.mode] || ALL_DROP_MAPS.resurgence; }
+function getDropIdx(){
+  const maps = getDropMaps();
+  return Math.max(0, Math.min(parseInt(localStorage.getItem(LS_DROP)||'0'), maps.length-1));
+}
+function setDropIdx(i){
+  const maps = getDropMaps();
+  localStorage.setItem(LS_DROP, Math.max(0, Math.min(i, maps.length-1)));
+  renderDropControl();
+}
 
 function renderDropControl(){
+  const maps  = getDropMaps();
   const idx   = getDropIdx();
-  const map   = DROP_MAPS[idx];
-  const next  = DROP_MAPS[(idx+1) % DROP_MAPS.length];
-  const total = DROP_MAPS.length;
+  const map   = maps[idx];
+  const next  = maps[idx+1] || null;
+  const total = maps.length;
 
-  const numEl  = document.getElementById('drop-current-num');
-  const totEl  = document.getElementById('drop-total-label');
-  const nmEl   = document.getElementById('drop-map-name');
-  const mdEl   = document.getElementById('drop-map-mode');
-  const nxEl   = document.getElementById('drop-next-name');
-  const trk    = document.getElementById('drop-dot-track');
-  const btn    = document.getElementById('btn-drop-next');
+  const numEl = document.getElementById('drop-current-num');
+  const totEl = document.getElementById('drop-total-label');
+  const nmEl  = document.getElementById('drop-map-name');
+  const mdEl  = document.getElementById('drop-map-mode');
+  const nxEl  = document.getElementById('drop-next-name');
+  const trk   = document.getElementById('drop-dot-track');
+  const btn   = document.getElementById('btn-drop-next');
 
-  if(!numEl) return; // panel not visible
+  if(!numEl) return;
 
-  numEl.textContent  = String(idx+1).padStart(2,'0');
-  totEl.textContent  = `/ ${total}`;
-  nmEl.textContent   = map.name;
-  mdEl.textContent   = map.mode;
-  nxEl.textContent   = idx < total-1 ? next.name : '— FIM —';
+  numEl.textContent = String(idx+1).padStart(2,'0');
+  totEl.textContent = `/ ${total}`;
+  nmEl.textContent  = map.name;
+  mdEl.textContent  = `${S.mode==='br'?'💀':'🔄'} ${map.mode}`;
+  nxEl.textContent  = next ? next.name : '— FIM —';
 
   // Dot track
   if(trk){
-    trk.innerHTML = DROP_MAPS.map((_,i)=>{
-      const done = i < idx;
+    trk.innerHTML = maps.map((_,i)=>{
+      const done   = i < idx;
       const active = i === idx;
-      return `<div style="
-        flex:1;height:4px;border-radius:2px;
-        background:${active?'var(--orange)':done?'rgba(0,255,135,.4)':'rgba(255,255,255,.1)'};
-        transition:all .3s
-      "></div>`;
+      return `<div style="flex:1;height:4px;border-radius:2px;background:${active?'var(--orange)':done?'rgba(0,255,135,.4)':'rgba(255,255,255,.1)'};transition:all .3s"></div>`;
     }).join('');
   }
 
-  // Button state
+  // Button
   if(btn){
     const isLast = idx >= total-1;
-    btn.textContent  = isLast ? '✓ ÚLTIMA QUEDA' : `▶ CONFIRMAR QUEDA ${String(idx+2).padStart(2,'0')}`;
+    btn.textContent = isLast ? '✓ ÚLTIMA QUEDA' : `▶ CONFIRMAR QUEDA ${String(idx+2).padStart(2,'0')}`;
     btn.disabled = isLast;
     btn.style.opacity = isLast ? '.5' : '1';
   }
@@ -638,11 +647,12 @@ function renderDropControl(){
 function setupDropEvents(){
   // Próxima queda
   document.getElementById('btn-drop-next')?.addEventListener('click', ()=>{
-    const cur = getDropIdx();
-    if(cur >= DROP_MAPS.length-1){ showToast('Última queda!',''); return; }
+    const maps = getDropMaps();
+    const cur  = getDropIdx();
+    if(cur >= maps.length-1){ showToast('Última queda!',''); return; }
     setDropIdx(cur+1);
-    const fb = document.getElementById('drop-feedback');
-    const map = DROP_MAPS[getDropIdx()];
+    const fb  = document.getElementById('drop-feedback');
+    const map = getDropMaps()[getDropIdx()];
     fb.textContent = `✓ Overlay → QUEDA ${String(getDropIdx()+1).padStart(2,'0')} — ${map.name}`;
     fb.className = 'admin-feedback ok';
     showToast(`🗺 QUEDA ${String(getDropIdx()+1).padStart(2,'0')}: ${map.name}`,'ok');
@@ -654,7 +664,7 @@ function setupDropEvents(){
     const cur = getDropIdx();
     if(cur <= 0){ showToast('Já está na primeira queda!',''); return; }
     setDropIdx(cur-1);
-    const map = DROP_MAPS[getDropIdx()];
+    const map = getDropMaps()[getDropIdx()];
     showToast(`◀ Voltou → QUEDA ${String(getDropIdx()+1).padStart(2,'0')}: ${map.name}`,'');
   });
 
@@ -667,6 +677,11 @@ function setupDropEvents(){
     fb.className = 'admin-feedback ok';
     showToast('Overlay resetado para Queda 01','ok');
     setTimeout(()=>{ fb.textContent=''; fb.className='admin-feedback'; }, 3000);
+  });
+
+  // Também re-renderiza quando o modo muda (cliques nos botões de modo)
+  document.querySelectorAll('[data-mode]').forEach(btn=>{
+    btn.addEventListener('click', ()=> setTimeout(renderDropControl, 50));
   });
 
   // Init display
