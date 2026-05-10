@@ -65,6 +65,13 @@ details[open] summary{color:#ff6a00}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.ok{background:rgba(0,255,135,.12);border:1px solid rgba(0,255,135,.25);color:#00ff87}
 .toast.er{background:rgba(255,45,85,.12);border:1px solid rgba(255,45,85,.25);color:#ff2d55}
+/* Custom logo upload button */
+.logo-upload-wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.logo-upload-btn{display:inline-flex;align-items:center;gap:7px;background:rgba(255,106,0,0.1);border:1px solid rgba(255,106,0,0.35);color:#ff6a00;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;padding:8px 14px;border-radius:8px;cursor:pointer;transition:.2s;white-space:nowrap}
+.logo-upload-btn:hover{background:rgba(255,106,0,0.22);border-color:rgba(255,106,0,0.6)}
+.logo-upload-btn svg{flex-shrink:0}
+.logo-upload-name{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;color:#4a5568;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.logo-preview{width:44px;height:44px;border-radius:8px;object-fit:cover;border:2px solid rgba(255,106,0,0.3);display:none}
 </style>
 </head>
 <body>
@@ -104,8 +111,15 @@ details[open] summary{color:#ff6a00}
         <div class="fg"><label>TAG (máx. 5) *</label><input id="ctg" maxlength="5" placeholder="OPT"/></div>
         <div class="fg"><label>COR</label><input type="color" id="cc" value="#ff6a00"/></div>
         <div class="fg"><label>LOGO</label>
-          <input type="file" id="cl" accept="image/*" onchange="prvL(this)"/>
-          <img id="lp" style="display:none;max-width:70px;border-radius:8px;margin-top:6px"/>
+          <div class="logo-upload-wrap">
+            <label class="logo-upload-btn" for="cl">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              ENVIAR LOGO
+            </label>
+            <span class="logo-upload-name" id="cl-name">Nenhum arquivo</span>
+            <img id="lp" class="logo-preview"/>
+          </div>
+          <input type="file" id="cl" accept="image/*" style="display:none" onchange="prvL(this,'lp','cl-name')"/>
         </div>
       </div>
       <div style="display:flex;gap:10px">
@@ -128,7 +142,17 @@ details[open] summary{color:#ff6a00}
             <div class="fg"><label>NOME</label><input id="en"/></div>
             <div class="fg"><label>TAG</label><input id="et" maxlength="5"/></div>
             <div class="fg"><label>COR</label><input type="color" id="ec"/></div>
-            <div class="fg"><label>LOGO</label><input type="file" id="el" accept="image/*"/></div>
+            <div class="fg"><label>LOGO</label>
+              <div class="logo-upload-wrap">
+                <label class="logo-upload-btn" for="el">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  TROCAR LOGO
+                </label>
+                <span class="logo-upload-name" id="el-name">Nenhum arquivo</span>
+                <img id="elp" class="logo-preview"/>
+              </div>
+              <input type="file" id="el" accept="image/*" style="display:none" onchange="prvL(this,'elp','el-name')"/>
+            </div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="bp" onclick="editTeam()">SALVAR</button>
@@ -193,9 +217,14 @@ function showCreate(){
   document.getElementById('v-crt').style.display='block';
   document.getElementById('v-team').style.display='none';
 }
-function prvL(i){
-  var p=document.getElementById('lp');
-  if(i.files[0]){p.src=URL.createObjectURL(i.files[0]);p.style.display='block'}
+function prvL(i, previewId, nameId){
+  previewId = previewId || 'lp'; nameId = nameId || 'cl-name';
+  var p=document.getElementById(previewId);
+  var nm=document.getElementById(nameId);
+  if(i.files[0]){
+    p.src=URL.createObjectURL(i.files[0]);p.style.display='block';
+    if(nm) nm.textContent=i.files[0].name.length>20?i.files[0].name.slice(0,18)+'...':i.files[0].name;
+  }
 }
 
 function logoEl(t,sz){
@@ -212,6 +241,11 @@ function renderMyTeam(t){
   document.getElementById('en').value=t.name;
   document.getElementById('et').value=t.tag;
   document.getElementById('ec').value=t.color||'#ff6a00';
+  // Show current logo in edit preview
+  var elp=document.getElementById('elp');
+  var eln=document.getElementById('el-name');
+  if(elp){if(t.logo){elp.src=t.logo;elp.style.display='block';}else{elp.style.display='none';}}
+  if(eln){eln.textContent=t.logo?'Logo atual':'';}  
   var me=ME(),canEdit=t.ownerId===me.id||t.members.some(function(m){return m.userId===me.id&&m.role==='manager'});
   document.getElementById('edet').style.display=canEdit?'':'none';
   document.getElementById('tbanner').innerHTML=logoEl(t,60)+
