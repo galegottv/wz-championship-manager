@@ -212,6 +212,117 @@ function renderPontos(mode){
 
 // ── RENDER SETUP ──
 
+
+// ── REGISTRATIONS PANEL (admin / owner) ──────────────────────────────────────
+async function loadRegistrationsPanel() {
+  const box = document.getElementById('registrations-list');
+  if (!box) return;
+  if (!S.apiId) {
+    box.innerHTML = '<span style="color:#ff6b8a">⚠ Salve o campeonato primeiro (clique em SALVAR na seção Informações).</span>';
+    return;
+  }
+  box.innerHTML = '<span style="color:#4a5568;letter-spacing:2px">CARREGANDO...</span>';
+  try {
+    const token = localStorage.getItem('wzc_token');
+    const resp = await fetch(`/api/championships/${S.apiId}/registrations`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+    const regs = resp.ok ? await resp.json() : [];
+    if (!regs.length) {
+      box.innerHTML = '<span style="color:#4a5568">Nenhuma inscrição recebida ainda.</span>';
+      return;
+    }
+    const statusLabel = { pending:'⏳ Pendente', pending_payment:'💰 Ag. Pagamento', approved:'✅ Aprovado', rejected:'❌ Rejeitado' };
+    const statusColor = { pending:'#ffd700', pending_payment:'#ff9500', approved:'#00ff87', rejected:'#ff2d55' };
+    box.innerHTML = regs.map(r => {
+      const alreadyAdded = S.teams.some(t => t.id === r.teamId || t.tag === r.teamTag);
+      const addBtn = alreadyAdded
+        ? `<span style="color:#00ff87;font-size:10px;letter-spacing:1px">✓ ADICIONADO</span>`
+        : `<button onclick="addRegTeam('${r.teamId}','${(r.teamName||'').replace(/'/g,'\\'')}','${(r.teamTag||'').replace(/'/g,'\\'')}','${r.teamColor||'#ff6a00'}')"
+            style="background:rgba(0,255,135,.1);border:1px solid rgba(0,255,135,.3);color:#00ff87;font-family:var(--font-cond);font-size:10px;letter-spacing:2px;padding:4px 12px;border-radius:6px;cursor:pointer">
+            + ADICIONAR
+          </button>`;
+      const approveBtn = (r.status === 'pending' || r.status === 'pending_payment')
+        ? `<button onclick="approveReg('${S.apiId}','${r.id}')"
+            style="background:rgba(255,106,0,.1);border:1px solid rgba(255,106,0,.3);color:#ff6a00;font-family:var(--font-cond);font-size:10px;letter-spacing:2px;padding:4px 12px;border-radius:6px;cursor:pointer;margin-right:6px">
+            ✔ APROVAR
+          </button>`
+        : '';
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);flex-wrap:wrap">
+        <div style="width:36px;height:36px;border-radius:6px;background:${r.teamColor||'#ff6a00'}22;border:1px solid ${r.teamColor||'#ff6a00'}44;display:flex;align-items:center;justify-content:center;font-family:var(--font-cond);font-weight:900;font-size:12px;color:${r.teamColor||'#ff6a00'};flex-shrink:0">${(r.teamTag||'?').slice(0,3)}</div>
+        <div style="flex:1;min-width:120px">
+          <div style="font-family:var(--font-cond);font-size:13px;font-weight:700;letter-spacing:1px">${r.teamName||r.teamId}</div>
+          <div style="font-size:10px;color:${statusColor[r.status]||'#4a5568'};letter-spacing:2px;margin-top:2px">${statusLabel[r.status]||r.status}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">${approveBtn}${addBtn}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    box.innerHTML = `<span style="color:#ff2d55">Erro: ${e.message}</span>`;
+  }
+}
+
+async function approveReg(champId, regId) {
+  try {
+    const token = localStorage.getItem('wzc_token');
+    const resp = await fetch(`/api/championships/${champId}/registrations/${regId}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'approved' })
+    });
+    if (resp.ok) { showToast('Inscrição aprovada!','ok'); loadRegistrationsPanel(); }
+    else { const d = await resp.json(); showToast(d.error||'Erro','err'); }
+  } catch(e) { showToast(e.message,'err'); }
+}
+
+function addRegTeam(teamId, teamName, teamTag, teamColor) {
+  const group = document.getElementById('cfg-team-group')?.value || S.groups[0]?.name || '';
+  if (!group) { showToast('Crie um grupo primeiro!','err'); return; }
+  const team = { id: teamId, name: teamName, tag: teamTag, color: teamColor, group };
+  if (S.teams.some(t => t.id === teamId)) { showToast('Time já adicionado','err'); return; }
+  S.teams.push(team);
+  S.matches.filter(m => m.group === group && m.status === 'upcoming').forEach(m => {
+    if (!m.teamIds.includes(team.id)) m.teamIds.push(team.id);
+  });
+  save(); renderAll();
+  showToast(`${teamName} adicionado!`, 'ok');
+  loadRegistrationsPanel();
+}
+
+// ── ADMIN: load any championship from API ─────────────────────────────────────
+async function initAdminChampLoader() {
+  const me = JSON.parse(localStorage.getItem('wzc_user') || '{}');
+  if (me.role !== 'admin') return;
+  const wrap = document.getElementById('admin-load-champ-wrap');
+  if (wrap) wrap.style.display = 'block';
+
+  try {
+    const resp = await fetch('/api/championships');
+    const champs = resp.ok ? await resp.json() : [];
+    const sel = document.getElementById('admin-champ-select');
+    if (!sel) return;
+    if (!champs.length) { sel.innerHTML = '<option value="">Nenhum campeonato cadastrado</option>'; return; }
+    sel.innerHTML = champs.map(c => `<option value="${c.id}">${c.name} — ${c.season||''}</option>`).join('');
+    const btn = document.getElementById('btn-load-existing-champ');
+    if (btn) btn.onclick = async () => {
+      const id = sel.value;
+      if (!id) return;
+      const chosen = champs.find(c => c.id === id);
+      if (!chosen) return;
+      // Load into S (merge with current blank)
+      S = blank();
+      S.name = chosen.name; S.season = chosen.season || ''; S.prize = chosen.prize || '';
+      S.mode = chosen.mode || 'resurgence'; S.scheduledAt = chosen.scheduledAt || '';
+      S.description = chosen.description || ''; S.registrationsOpen = chosen.registrationsOpen;
+      S.liveUrl = chosen.liveUrl || ''; S.isLive = chosen.isLive || false;
+      S.apiId = chosen.id;
+      save(); renderAll();
+      document.getElementById('empty-screen').style.display = 'none';
+      document.getElementById('champ-view').style.display = 'block';
+      showToast(`Campeonato "${chosen.name}" carregado!`, 'ok');
+    };
+  } catch(e) { console.warn('Admin loader:', e.message); }
+}
 // Sync current championship to API (so home.html shows it to all users)
 async function syncChampToAPI() {
   try {
@@ -423,6 +534,9 @@ function setupEvents(){
     document.getElementById('cfg-group-name').value='';
     save();renderAll();showToast(`Grupo ${n} criado!`,'ok');
   };
+  // load registrations panel
+  const regBtn = document.getElementById('btn-load-registrations');
+  if(regBtn) { regBtn.onclick = loadRegistrationsPanel; loadRegistrationsPanel(); }
   // add team
   document.getElementById('btn-cfg-add-team').onclick=()=>{
     const name=document.getElementById('cfg-team-name').value.trim();
@@ -865,6 +979,7 @@ function renderMVP(){
 // ── RENDER ALL ──
 function renderAll(){
   renderHero();renderSetup();
+initAdminChampLoader();
   renderStandings();renderGroups();renderMatches();
   renderPontos(S.mode);
 }

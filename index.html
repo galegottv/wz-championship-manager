@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
@@ -75,6 +75,13 @@
   <button class="btn-create-first" id="btn-create-first">
     + CRIAR CAMPEONATO
   </button>
+  <div id="admin-load-champ-wrap" style="display:none;margin-top:20px;width:100%;max-width:420px">
+    <div style="font-family:var(--font-cond);font-size:11px;letter-spacing:3px;color:#4a5568;margin-bottom:10px;text-align:center">OU GERENCIE UM EXISTENTE</div>
+    <select id="admin-champ-select" style="width:100%;background:#0d1118;border:1px solid rgba(255,106,0,.3);color:#e2e8f0;font-family:var(--font-cond);font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:10px">
+      <option value="">Carregando campeonatos...</option>
+    </select>
+    <button class="btn-secondary" id="btn-load-existing-champ" style="width:100%;letter-spacing:2px">⬇ CARREGAR E GERENCIAR</button>
+  </div>
 </div>
 
 <!-- ===== ACTIVE CHAMPIONSHIP ===== -->
@@ -278,6 +285,20 @@
 
       <div class="setup-block">
         <div class="setup-block-title"><span class="setup-step-num">3</span> TIMES</div>
+
+        <!-- INSCRIÇÕES RECEBIDAS -->
+        <div style="background:rgba(0,255,135,.04);border:1px solid rgba(0,255,135,.15);border-radius:10px;padding:16px;margin-bottom:18px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+            <div style="font-family:var(--font-cond);font-size:13px;font-weight:700;letter-spacing:3px;color:#00ff87">📋 INSCRIÇÕES RECEBIDAS</div>
+            <button class="btn-secondary" id="btn-load-registrations" style="font-size:10px;padding:6px 14px;letter-spacing:2px">⬇ CARREGAR INSCRIÇÕES</button>
+          </div>
+          <div id="registrations-list" style="font-family:var(--font-cond);font-size:12px;letter-spacing:1px;color:var(--text-2)">
+            Clique em "CARREGAR INSCRIÇÕES" para ver os times que se inscreveram.
+          </div>
+        </div>
+
+        <!-- ADICIONAR MANUALMENTE -->
+        <div style="font-family:var(--font-cond);font-size:11px;letter-spacing:3px;color:var(--text-2);margin-bottom:10px">✏ ADICIONAR MANUALMENTE</div>
         <div class="setup-form-row">
           <div class="form-group"><label class="form-label">Nome</label><input type="text" class="form-control" id="cfg-team-name" placeholder="Ex: OpTic Gaming"/></div>
           <div class="form-group"><label class="form-label">Tag</label><input type="text" class="form-control" id="cfg-team-tag" maxlength="5" placeholder="OPT"/></div>
