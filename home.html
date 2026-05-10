@@ -679,15 +679,6 @@ async function loadChampionships() {
     if (resp.ok) allChamps = await resp.json();
   } catch {}
 
-  // Fallback: also check localStorage
-  const raw = localStorage.getItem(LS_KEY);
-  if (raw) {
-    try {
-      const local = JSON.parse(raw);
-      if (local && local.name) allChamps.unshift(local); // local first
-    } catch {}
-  }
-
   if (!allChamps.length) return;
 
   const liveCards = [], upCards = [];

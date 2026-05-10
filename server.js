@@ -601,6 +601,41 @@ app.post('/api/championships', authMiddleware, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+
+// PATCH /api/championships/:id - update championship info
+app.patch('/api/championships/:id', authMiddleware, async (req, res) => {
+  try {
+    const champs = await db2.readChamps();
+    const idx = champs.findIndex(c => c.id === req.params.id);
+    if (idx < 0) return res.status(404).json({ error: 'Campeonato nao encontrado' });
+    if (champs[idx].ownerId !== req.user.id && req.user.role !== 'admin')
+      return res.status(403).json({ error: 'Sem permissao' });
+    const allowed = ['name','mode','season','prize','entryFee','registrationsOpen','scheduledAt','description','liveUrl','isLive'];
+    const upd = {};
+    allowed.forEach(k => { if (req.body[k] !== undefined) upd[k] = req.body[k]; });
+    if (usesMongo) {
+      const updated = await Champ.findOneAndUpdate({ id: req.params.id }, upd, { new: true }).lean();
+      return res.json(updated);
+    }
+    Object.assign(champs[idx], upd);
+    await db2.writeChamps(champs);
+    res.json(champs[idx]);
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// DELETE /api/championships/:id
+app.delete('/api/championships/:id', authMiddleware, async (req, res) => {
+  try {
+    const champs = await db2.readChamps();
+    const champ = champs.find(c => c.id === req.params.id);
+    if (!champ) return res.status(404).json({ error: 'Nao encontrado' });
+    if (champ.ownerId !== req.user.id && req.user.role !== 'admin')
+      return res.status(403).json({ error: 'Sem permissao' });
+    if (usesMongo) await Champ.deleteOne({ id: req.params.id });
+    else await db2.writeChamps(champs.filter(c => c.id !== req.params.id));
+    res.json({ message: 'Campeonato excluido' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
 // GET /api/championships/:id/registrations
 app.get('/api/championships/:id/registrations', async (req, res) => {
   const regs = (await db2.readRegs()).filter(r => r.champId === req.params.id);

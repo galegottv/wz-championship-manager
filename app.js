@@ -1,4 +1,4 @@
-// ── PONTOS OFICIAIS ──
+﻿// ── PONTOS OFICIAIS ──
 const POINTS = {
   resurgence: [15,12,9,7,5,4,3,3,2,2,1,1,1,1,1,0,0,0,0,0],
   br:         [25,20,17,15,13,11,9,8,7,6,5,4,3,2,2,1,1,1,1,0]
@@ -29,6 +29,7 @@ function blank() {
     name:'WZ Championship', season:'Season 3', phase:'Fase de Grupos — Semana 1',
     prize:'$50,000', mode:'resurgence', rounds:4,
     description:'', scheduledAt:'',
+    apiId: null,
     groups:[], teams:[], matches:[], isLive:false, liveUrl:''
   };
 }
@@ -210,6 +211,41 @@ function renderPontos(mode){
 }
 
 // ── RENDER SETUP ──
+
+// Sync current championship to API (so home.html shows it to all users)
+async function syncChampToAPI() {
+  try {
+    const token = localStorage.getItem('wzc_token');
+    if (!token) return; // not logged in
+    const payload = {
+      name: S.name, mode: S.mode, season: S.season, prize: S.prize,
+      scheduledAt: S.scheduledAt || null, description: S.description || '',
+      registrationsOpen: S.registrationsOpen !== false,
+      entryFee: S.entryFee || 0, liveUrl: S.liveUrl || '',
+    };
+    let resp, data;
+    if (S.apiId) {
+      // Update existing
+      resp = await fetch(`/api/championships/${S.apiId}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    } else {
+      // Create new
+      resp = await fetch('/api/championships', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    }
+    if (resp && resp.ok) {
+      data = await resp.json();
+      if (!S.apiId && data.id) { S.apiId = data.id; save(); }
+      console.log('[API] Championship synced:', data.id);
+    }
+  } catch(e) { console.warn('[API] Sync failed:', e.message); }
+}
 function renderSetup(){
   document.getElementById('cfg-tournament-name').value=S.name||'';
   document.getElementById('cfg-season').value=S.season||'';
@@ -369,6 +405,7 @@ function setupEvents(){
     const regOpenEl = document.getElementById('cfg-registrations-open');
     if(regOpenEl) S.registrationsOpen = regOpenEl.checked;
     save();renderAll();
+    syncChampToAPI();
     document.getElementById('info-feedback').textContent='✓ Salvo!';
     document.getElementById('info-feedback').className='admin-feedback ok';
     showToast('Informações salvas!','ok');
@@ -548,6 +585,8 @@ function setupEvents(){
   const delBtn=document.getElementById('btn-delete-champ');
   if(delBtn) delBtn.onclick=()=>{
     if(!confirm('Excluir este campeonato?'))return;
+    // Also delete from API
+    if(S.apiId){const tk=localStorage.getItem('wzc_token');fetch('/api/championships/'+S.apiId,{method:'DELETE',headers:{Authorization:'Bearer '+tk}}).catch(()=>{});}
     hardReset(false);
     document.getElementById('champ-view').style.display='none';
     document.getElementById('empty-screen').style.display='flex';
