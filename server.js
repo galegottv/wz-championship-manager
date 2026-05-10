@@ -42,7 +42,7 @@ const PLANS = {
 
 let usesMongo = false;
 
-// ── MongoDB Schema ──
+// ── MongoDB Schemas ──
 const userSchema = new mongoose.Schema({
   id:{ type:String, unique:true },
   nickname:String, email:{ type:String, unique:true },
@@ -51,11 +51,37 @@ const userSchema = new mongoose.Schema({
   createdAt:String, stripeCustomerId:String,
   subscriptionId:String, subscriptionExpiry:String,
 });
-let User;
+
+const teamSchema = new mongoose.Schema({
+  id:{ type:String, unique:true },
+  name:String, tag:String, color:String, logo:String,
+  ownerId:String, ownerNick:String, memberLimit:Number,
+  members:[{ userId:String, nickname:String, role:String }],
+  createdAt:String,
+}, { strict:false });
+
+const champSchema = new mongoose.Schema({
+  id:{ type:String, unique:true },
+  name:String, mode:String, season:String, prize:String,
+  entryFee:Number, registrationsOpen:Boolean,
+  ownerId:String, ownerNick:String, createdAt:String,
+}, { strict:false });
+
+const regSchema = new mongoose.Schema({
+  id:{ type:String, unique:true },
+  champId:String, teamId:String, teamName:String, teamTag:String,
+  status:String, fee:Number, paidAt:String, manual:Boolean,
+  approvedAt:String, createdAt:String,
+}, { strict:false });
+
+let User, Team, Champ, Reg;
 
 async function connectMongo() {
   await mongoose.connect(MONGODB_URL);
-  User = mongoose.model('User', userSchema);
+  User  = mongoose.model('User',  userSchema);
+  Team  = mongoose.model('Team',  teamSchema);
+  Champ = mongoose.model('Champ', champSchema);
+  Reg   = mongoose.model('Reg',   regSchema);
   usesMongo = true;
   console.log('  ✓ MongoDB conectado');
   // Seed admin se não existir
@@ -354,14 +380,32 @@ const upload = multer({ storage, limits: { fileSize: 2 * 1024 * 1024 }, fileFilt
 }});
 app.use('/uploads', express.static(uploadDir));
 
-// ── DB helpers para teams/registrations (JSON) ──
+// ── DB helpers para teams/registrations (Mongo ou JSON) ──
 const db2 = {
-  readTeams() { const d = readDB(); return d.teams || []; },
-  writeTeams(teams) { const d = readDB(); d.teams = teams; writeDB(d); },
-  readRegs() { const d = readDB(); return d.registrations || []; },
-  writeRegs(regs) { const d = readDB(); d.registrations = regs; writeDB(d); },
-  readChamps() { const d = readDB(); return d.championships || []; },
-  writeChamps(c) { const d = readDB(); d.championships = c; writeDB(d); },
+  async readTeams() {
+    if (usesMongo) return Team.find().lean();
+    return readDB().teams || [];
+  },
+  async writeTeams(teams) {
+    if (usesMongo) return; // mongo é gerenciado por operações individuais
+    const d = readDB(); d.teams = teams; writeDB(d);
+  },
+  async readRegs() {
+    if (usesMongo) return Reg.find().lean();
+    return readDB().registrations || [];
+  },
+  async writeRegs(regs) {
+    if (usesMongo) return;
+    const d = readDB(); d.registrations = regs; writeDB(d);
+  },
+  async readChamps() {
+    if (usesMongo) return Champ.find().lean();
+    return readDB().championships || [];
+  },
+  async writeChamps(champs) {
+    if (usesMongo) return;
+    const d = readDB(); d.championships = champs; writeDB(d);
+  },
 };
 
 // TEAM LIMITS by plan
@@ -372,20 +416,21 @@ const TEAM_MEMBER_LIMIT = { free: 5, pro: 5, elite: 7 };
 // ══════════════════════════════════════════════════════
 
 // GET /api/teams — lista pública
-app.get('/api/teams', (req, res) => {
-  res.json(db2.readTeams());
+app.get('/api/teams', async (req, res) => {
+  res.json(await db2.readTeams());
 });
 
 // GET /api/teams/my — meu time
-app.get('/api/teams/my', authMiddleware, (req, res) => {
-  const team = db2.readTeams().find(t => t.ownerId === req.user.id || t.members.some(m => m.userId === req.user.id));
+app.get('/api/teams/my', authMiddleware, async (req, res) => {
+  const teams = await db2.readTeams();
+  const team = teams.find(t => t.ownerId === req.user.id || t.members.some(m => m.userId === req.user.id));
   res.json(team || null);
 });
 
 // POST /api/teams — criar time
 app.post('/api/teams', authMiddleware, upload.single('logo'), async (req, res) => {
   try {
-    const teams = db2.readTeams();
+    const teams = await db2.readTeams();
     if (teams.find(t => t.ownerId === req.user.id || t.members.some(m => m.userId === req.user.id)))
       return res.status(409).json({ error: 'Você já pertence a um time' });
     const { name, tag, color } = req.body;
@@ -395,18 +440,15 @@ app.post('/api/teams', authMiddleware, upload.single('logo'), async (req, res) =
     const logo = req.file ? `/uploads/${req.file.filename}` : '';
     const team = {
       id: `team_${Date.now()}`,
-      name: name.trim(),
-      tag: tag.trim().toUpperCase().slice(0, 5),
-      color: color || '#ff6a00',
-      logo,
-      ownerId: req.user.id,
-      ownerNick: req.user.nickname,
+      name: name.trim(), tag: tag.trim().toUpperCase().slice(0, 5),
+      color: color || '#ff6a00', logo,
+      ownerId: req.user.id, ownerNick: req.user.nickname,
       memberLimit: TEAM_MEMBER_LIMIT[user?.plan || 'free'],
       members: [{ userId: req.user.id, nickname: req.user.nickname, role: 'captain' }],
       createdAt: new Date().toISOString(),
     };
-    teams.push(team);
-    db2.writeTeams(teams);
+    if (usesMongo) await Team.create(team);
+    else { teams.push(team); await db2.writeTeams(teams); }
     res.json(team);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -414,39 +456,48 @@ app.post('/api/teams', authMiddleware, upload.single('logo'), async (req, res) =
 // PATCH /api/teams/:id — editar time
 app.patch('/api/teams/:id', authMiddleware, upload.single('logo'), async (req, res) => {
   try {
-    const teams = db2.readTeams();
+    const teams = await db2.readTeams();
     const idx = teams.findIndex(t => t.id === req.params.id);
     if (idx < 0) return res.status(404).json({ error: 'Time não encontrado' });
     if (teams[idx].ownerId !== req.user.id && req.user.role !== 'admin')
       return res.status(403).json({ error: 'Sem permissão' });
     const { name, tag, color } = req.body;
-    if (name) teams[idx].name = name.trim();
+    const upd = {};
+    if (name) upd.name = name.trim();
     if (tag) {
       if (teams.find((t, i) => i !== idx && t.tag.toLowerCase() === tag.toLowerCase()))
         return res.status(409).json({ error: 'Tag já em uso' });
-      teams[idx].tag = tag.trim().toUpperCase().slice(0, 5);
+      upd.tag = tag.trim().toUpperCase().slice(0, 5);
     }
-    if (color) teams[idx].color = color;
-    if (req.file) teams[idx].logo = `/uploads/${req.file.filename}`;
-    db2.writeTeams(teams);
+    if (color) upd.color = color;
+    if (req.file) upd.logo = `/uploads/${req.file.filename}`;
+    if (usesMongo) {
+      const updated = await Team.findOneAndUpdate({ id: req.params.id }, upd, { new: true }).lean();
+      return res.json(updated);
+    }
+    Object.assign(teams[idx], upd);
+    await db2.writeTeams(teams);
     res.json(teams[idx]);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // DELETE /api/teams/:id
-app.delete('/api/teams/:id', authMiddleware, (req, res) => {
-  const teams = db2.readTeams();
-  const team = teams.find(t => t.id === req.params.id);
-  if (!team) return res.status(404).json({ error: 'Não encontrado' });
-  if (team.ownerId !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'Sem permissão' });
-  db2.writeTeams(teams.filter(t => t.id !== req.params.id));
-  res.json({ message: 'Time excluído' });
+app.delete('/api/teams/:id', authMiddleware, async (req, res) => {
+  try {
+    const teams = await db2.readTeams();
+    const team = teams.find(t => t.id === req.params.id);
+    if (!team) return res.status(404).json({ error: 'Não encontrado' });
+    if (team.ownerId !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'Sem permissão' });
+    if (usesMongo) await Team.deleteOne({ id: req.params.id });
+    else await db2.writeTeams(teams.filter(t => t.id !== req.params.id));
+    res.json({ message: 'Time excluído' });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // POST /api/teams/:id/members — adicionar membro
 app.post('/api/teams/:id/members', authMiddleware, async (req, res) => {
   try {
-    const teams = db2.readTeams();
+    const teams = await db2.readTeams();
     const idx = teams.findIndex(t => t.id === req.params.id);
     if (idx < 0) return res.status(404).json({ error: 'Time não encontrado' });
     if (teams[idx].ownerId !== req.user.id) return res.status(403).json({ error: 'Sem permissão' });
@@ -458,88 +509,94 @@ app.post('/api/teams/:id/members', authMiddleware, async (req, res) => {
     const owner = await db.findUser({ id: req.user.id });
     const limit = TEAM_MEMBER_LIMIT[owner?.plan || 'free'];
     if (teams[idx].members.length >= limit)
-      return res.status(400).json({ error: `Limite de ${limit} membros atingido (plano ${owner?.plan || 'free'})` });
-    teams[idx].members.push({ userId: target.id, nickname: target.nickname, role: 'player' });
-    db2.writeTeams(teams);
+      return res.status(400).json({ error: `Limite de ${limit} membros atingido` });
+    const newMember = { userId: target.id, nickname: target.nickname, role: 'player' };
+    if (usesMongo) {
+      const updated = await Team.findOneAndUpdate({ id: req.params.id }, { $push: { members: newMember } }, { new: true }).lean();
+      return res.json(updated);
+    }
+    teams[idx].members.push(newMember);
+    await db2.writeTeams(teams);
     res.json(teams[idx]);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // DELETE /api/teams/:id/members/:userId
-app.delete('/api/teams/:id/members/:userId', authMiddleware, (req, res) => {
-  const teams = db2.readTeams();
-  const idx = teams.findIndex(t => t.id === req.params.id);
-  if (idx < 0) return res.status(404).json({ error: 'Não encontrado' });
-  if (teams[idx].ownerId !== req.user.id && req.user.role !== 'admin' && req.user.id !== req.params.userId)
-    return res.status(403).json({ error: 'Sem permissão' });
-  if (req.params.userId === teams[idx].ownerId) return res.status(400).json({ error: 'Capitão não pode sair do time' });
-  teams[idx].members = teams[idx].members.filter(m => m.userId !== req.params.userId);
-  db2.writeTeams(teams);
-  res.json(teams[idx]);
+app.delete('/api/teams/:id/members/:userId', authMiddleware, async (req, res) => {
+  try {
+    const teams = await db2.readTeams();
+    const idx = teams.findIndex(t => t.id === req.params.id);
+    if (idx < 0) return res.status(404).json({ error: 'Não encontrado' });
+    if (teams[idx].ownerId !== req.user.id && req.user.role !== 'admin' && req.user.id !== req.params.userId)
+      return res.status(403).json({ error: 'Sem permissão' });
+    if (req.params.userId === teams[idx].ownerId) return res.status(400).json({ error: 'Capitão não pode sair do time' });
+    if (usesMongo) {
+      const updated = await Team.findOneAndUpdate({ id: req.params.id }, { $pull: { members: { userId: req.params.userId } } }, { new: true }).lean();
+      return res.json(updated);
+    }
+    teams[idx].members = teams[idx].members.filter(m => m.userId !== req.params.userId);
+    await db2.writeTeams(teams);
+    res.json(teams[idx]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ══════════════════════════════════════════════════════
 //  CHAMPIONSHIPS ROUTES (público)
 // ══════════════════════════════════════════════════════
 
-app.get('/api/championships', (req, res) => res.json(db2.readChamps()));
-
-app.post('/api/championships', authMiddleware, (req, res) => {
-  const user = req.user;
-  if (!['admin','pro','elite'].includes(user.plan) && user.role !== 'admin')
-    return res.status(403).json({ error: 'Plano PRO ou ELITE necessário' });
-  const champs = db2.readChamps();
-  const { name, mode, season, prize, entryFee, registrationsOpen } = req.body;
-  if (!name) return res.status(400).json({ error: 'Nome obrigatório' });
-  const champ = {
-    id: `champ_${Date.now()}`,
-    name, mode: mode || 'resurgence', season: season || 'Season 1',
-    prize: prize || '', entryFee: parseInt(entryFee) || 0,
-    registrationsOpen: registrationsOpen !== false,
-    ownerId: user.id, ownerNick: user.nickname,
-    createdAt: new Date().toISOString(),
-  };
-  champs.push(champ);
-  db2.writeChamps(champs);
-  res.json(champ);
+app.get('/api/championships', async (req, res) => {
+  res.json(await db2.readChamps());
 });
 
-// ══════════════════════════════════════════════════════
-//  REGISTRATIONS ROUTES
-// ══════════════════════════════════════════════════════
+app.post('/api/championships', authMiddleware, async (req, res) => {
+  try {
+    const user = req.user;
+    if (!['admin','pro','elite'].includes(user.plan) && user.role !== 'admin')
+      return res.status(403).json({ error: 'Plano PRO ou ELITE necessário' });
+    const { name, mode, season, prize, entryFee, registrationsOpen } = req.body;
+    if (!name) return res.status(400).json({ error: 'Nome obrigatório' });
+    const champ = {
+      id: `champ_${Date.now()}`, name, mode: mode || 'resurgence',
+      season: season || 'Season 1', prize: prize || '',
+      entryFee: parseInt(entryFee) || 0, registrationsOpen: registrationsOpen !== false,
+      ownerId: user.id, ownerNick: user.nickname, createdAt: new Date().toISOString(),
+    };
+    if (usesMongo) await Champ.create(champ);
+    else { const c = await db2.readChamps(); c.push(champ); await db2.writeChamps(c); }
+    res.json(champ);
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
 
 // GET /api/championships/:id/registrations
-app.get('/api/championships/:id/registrations', (req, res) => {
-  const regs = db2.readRegs().filter(r => r.champId === req.params.id);
-  const teams = db2.readTeams();
+app.get('/api/championships/:id/registrations', async (req, res) => {
+  const regs = (await db2.readRegs()).filter(r => r.champId === req.params.id);
+  const teams = await db2.readTeams();
   res.json(regs.map(r => ({ ...r, team: teams.find(t => t.id === r.teamId) || null })));
 });
 
 // POST /api/championships/:id/register — inscrever time
 app.post('/api/championships/:id/register', authMiddleware, async (req, res) => {
   try {
-    const champs = db2.readChamps();
+    const champs = await db2.readChamps();
     const champ = champs.find(c => c.id === req.params.id);
     if (!champ) return res.status(404).json({ error: 'Campeonato não encontrado' });
     if (!champ.registrationsOpen) return res.status(400).json({ error: 'Inscrições fechadas' });
-    const teams = db2.readTeams();
+    const teams = await db2.readTeams();
     const team = teams.find(t => t.ownerId === req.user.id || t.members.some(m => m.userId === req.user.id));
     if (!team) return res.status(400).json({ error: 'Você não tem time. Crie um time primeiro.' });
-    const regs = db2.readRegs();
+    const regs = await db2.readRegs();
     if (regs.find(r => r.champId === champ.id && r.teamId === team.id))
       return res.status(409).json({ error: 'Time já inscrito neste campeonato' });
-    // Se tiver taxa, precisa pagar
     const fee = champ.entryFee || 0;
     const reg = {
-      id: `reg_${Date.now()}`,
-      champId: champ.id, teamId: team.id, teamName: team.name, teamTag: team.tag,
+      id: `reg_${Date.now()}`, champId: champ.id, teamId: team.id,
+      teamName: team.name, teamTag: team.tag,
       status: fee > 0 ? 'pending_payment' : 'approved',
       fee, paidAt: null, createdAt: new Date().toISOString(),
     };
-    regs.push(reg);
-    db2.writeRegs(regs);
+    if (usesMongo) await Reg.create(reg);
+    else { regs.push(reg); await db2.writeRegs(regs); }
     if (fee > 0) {
-      // Criar sessão de pagamento
       const base = process.env.BASE_URL || `http://localhost:${PORT}`;
       if (stripe && req.body.method === 'stripe') {
         const session = await stripe.checkout.sessions.create({
@@ -555,8 +612,7 @@ app.post('/api/championships/:id/register', authMiddleware, async (req, res) => 
         const { Payment } = require('mercadopago');
         const p = new Payment(mpClient);
         const payment = await p.create({ body: {
-          transaction_amount: fee / 100,
-          description: `Inscrição: ${champ.name}`,
+          transaction_amount: fee / 100, description: `Inscrição: ${champ.name}`,
           payment_method_id: 'pix',
           payer: { email: req.user.email, first_name: req.user.nickname },
           metadata: { regId: reg.id },
@@ -570,45 +626,53 @@ app.post('/api/championships/:id/register', authMiddleware, async (req, res) => 
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// PATCH /api/championships/:id/registrations/:regId — aprovar/rejeitar
-app.patch('/api/championships/:id/registrations/:regId', authMiddleware, (req, res) => {
-  const champs = db2.readChamps();
-  const champ = champs.find(c => c.id === req.params.id);
-  if (!champ) return res.status(404).json({ error: 'Campeonato não encontrado' });
-  if (champ.ownerId !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'Sem permissão' });
-  const regs = db2.readRegs();
-  const idx = regs.findIndex(r => r.id === req.params.regId);
-  if (idx < 0) return res.status(404).json({ error: 'Inscrição não encontrada' });
-  const { status } = req.body;
-  if (!['approved', 'rejected'].includes(status)) return res.status(400).json({ error: 'Status inválido' });
-  regs[idx].status = status;
-  if (status === 'approved') regs[idx].approvedAt = new Date().toISOString();
-  db2.writeRegs(regs);
-  res.json(regs[idx]);
+// PATCH /api/championships/:id/registrations/:regId
+app.patch('/api/championships/:id/registrations/:regId', authMiddleware, async (req, res) => {
+  try {
+    const champs = await db2.readChamps();
+    const champ = champs.find(c => c.id === req.params.id);
+    if (!champ) return res.status(404).json({ error: 'Campeonato não encontrado' });
+    if (champ.ownerId !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'Sem permissão' });
+    const { status } = req.body;
+    if (!['approved', 'rejected'].includes(status)) return res.status(400).json({ error: 'Status inválido' });
+    const upd = { status, ...(status === 'approved' ? { approvedAt: new Date().toISOString() } : {}) };
+    if (usesMongo) {
+      const updated = await Reg.findOneAndUpdate({ id: req.params.regId }, upd, { new: true }).lean();
+      return res.json(updated);
+    }
+    const regs = await db2.readRegs();
+    const idx = regs.findIndex(r => r.id === req.params.regId);
+    if (idx < 0) return res.status(404).json({ error: 'Inscrição não encontrada' });
+    Object.assign(regs[idx], upd);
+    await db2.writeRegs(regs);
+    res.json(regs[idx]);
+  } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-// POST /api/championships/:id/teams/manual — adicionar time manualmente
-app.post('/api/championships/:id/teams/manual', authMiddleware, (req, res) => {
-  const champs = db2.readChamps();
-  const champ = champs.find(c => c.id === req.params.id);
-  if (!champ) return res.status(404).json({ error: 'Campeonato não encontrado' });
-  if (champ.ownerId !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'Sem permissão' });
-  const teams = db2.readTeams();
-  const { query } = req.body;
-  const team = teams.find(t => t.name.toLowerCase() === query?.toLowerCase() || t.tag.toLowerCase() === query?.toLowerCase());
-  if (!team) return res.status(404).json({ error: `Time "${query}" não encontrado` });
-  const regs = db2.readRegs();
-  if (regs.find(r => r.champId === champ.id && r.teamId === team.id))
-    return res.status(409).json({ error: 'Time já inscrito' });
-  const reg = {
-    id: `reg_${Date.now()}`,
-    champId: champ.id, teamId: team.id, teamName: team.name, teamTag: team.tag,
-    status: 'approved', fee: 0, paidAt: null, manual: true,
-    createdAt: new Date().toISOString(),
-  };
-  regs.push(reg);
-  db2.writeRegs(regs);
-  res.json({ reg, team });
+// POST /api/championships/:id/teams/manual
+app.post('/api/championships/:id/teams/manual', authMiddleware, async (req, res) => {
+  try {
+    const champs = await db2.readChamps();
+    const champ = champs.find(c => c.id === req.params.id);
+    if (!champ) return res.status(404).json({ error: 'Campeonato não encontrado' });
+    if (champ.ownerId !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'Sem permissão' });
+    const teams = await db2.readTeams();
+    const { query } = req.body;
+    const team = teams.find(t => t.name.toLowerCase() === query?.toLowerCase() || t.tag.toLowerCase() === query?.toLowerCase());
+    if (!team) return res.status(404).json({ error: `Time "${query}" não encontrado` });
+    const regs = await db2.readRegs();
+    if (regs.find(r => r.champId === champ.id && r.teamId === team.id))
+      return res.status(409).json({ error: 'Time já inscrito' });
+    const reg = {
+      id: `reg_${Date.now()}`, champId: champ.id, teamId: team.id,
+      teamName: team.name, teamTag: team.tag,
+      status: 'approved', fee: 0, paidAt: null, manual: true,
+      createdAt: new Date().toISOString(),
+    };
+    if (usesMongo) await Reg.create(reg);
+    else { regs.push(reg); await db2.writeRegs(regs); }
+    res.json({ reg, team });
+  } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 // GET /api/payments/reg/pix/status/:paymentId — confirmar pagamento Pix de inscrição
