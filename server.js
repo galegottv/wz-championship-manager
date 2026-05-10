@@ -540,6 +540,32 @@ app.delete('/api/teams/:id/members/:userId', authMiddleware, async (req, res) =>
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// PATCH /api/teams/:id/members/:userId/role — promover/rebaixar membro
+app.patch('/api/teams/:id/members/:userId/role', authMiddleware, async (req, res) => {
+  try {
+    const teams = await db2.readTeams();
+    const idx = teams.findIndex(t => t.id === req.params.id);
+    if (idx < 0) return res.status(404).json({ error: 'Time não encontrado' });
+    if (teams[idx].ownerId !== req.user.id) return res.status(403).json({ error: 'Apenas o capitão pode alterar permissões' });
+    const { role } = req.body;
+    if (!['manager','player'].includes(role)) return res.status(400).json({ error: 'Role inválido. Use: manager ou player' });
+    if (req.params.userId === teams[idx].ownerId) return res.status(400).json({ error: 'Não pode alterar o role do capitão' });
+    if (usesMongo) {
+      const updated = await Team.findOneAndUpdate(
+        { id: req.params.id, 'members.userId': req.params.userId },
+        { $set: { 'members.$.role': role } },
+        { new: true }
+      ).lean();
+      return res.json(updated);
+    }
+    const mi = teams[idx].members.findIndex(m => m.userId === req.params.userId);
+    if (mi < 0) return res.status(404).json({ error: 'Membro não encontrado' });
+    teams[idx].members[mi].role = role;
+    await db2.writeTeams(teams);
+    res.json(teams[idx]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ══════════════════════════════════════════════════════
 //  CHAMPIONSHIPS ROUTES (público)
 // ══════════════════════════════════════════════════════
