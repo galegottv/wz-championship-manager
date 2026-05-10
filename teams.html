@@ -176,7 +176,9 @@ async function api(method,path,body,isForm){
   var opts={method:method,headers:{Authorization:'Bearer '+TK()}};
   if(isForm){opts.body=body}
   else if(body){opts.headers['Content-Type']='application/json';opts.body=JSON.stringify(body)}
-  var r=await fetch('/api'+path,opts),d=await r.json();
+  var r=await fetch('/api'+path,opts);
+  var ct=r.headers.get('content-type')||'';
+  var d=ct.includes('application/json')?await r.json():{error:await r.text().then(t=>t.replace(/<[^>]+>/g,'').trim().slice(0,120)||'Erro no servidor')};
   if(!r.ok)throw new Error(d.error||'Erro');
   return d;
 }

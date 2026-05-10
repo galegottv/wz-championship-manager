@@ -375,7 +375,7 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${path.extname(file.originalname)}`),
 });
 const upload = multer({ storage, limits: { fileSize: 2 * 1024 * 1024 }, fileFilter: (req, file, cb) => {
-  if (!file.mimetype.startsWith('image/')) return cb(new Error('Apenas imagens'));
+  if (!file.mimetype.startsWith('image/')) return cb(null, false); // skip non-images silently
   cb(null, true);
 }});
 app.use('/uploads', express.static(uploadDir));
@@ -833,6 +833,13 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, file), err => {
     if (err) res.sendFile(path.join(__dirname, 'home.html'));
   });
+});
+// Global error handler — always returns JSON (catches multer errors, etc.)
+app.use((err, req, res, next) => {
+  console.error('[ERR]', err.message);
+  if (err.code === 'LIMIT_FILE_SIZE') return res.status(400).json({ error: 'Arquivo muito grande (max 2MB)' });
+  if (err.message === 'Apenas imagens') return res.status(400).json({ error: 'Apenas imagens são permitidas' });
+  res.status(500).json({ error: err.message || 'Erro interno' });
 });
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n  ╔══════════════════════════════════════════╗`);

@@ -17,11 +17,11 @@
   "championships": [],
   "teams": [
     {
-      "id": "team_1778449676999",
+      "id": "team_1778450037195",
       "name": "GZB E-sports",
       "tag": "GZB",
       "color": "#ff6a00",
-      "logo": "",
+      "logo": "/uploads/1778450037193-lcbs1hfr61.png",
       "ownerId": "admin-001",
       "ownerNick": "Admin",
       "memberLimit": 7,
@@ -32,7 +32,7 @@
           "role": "captain"
         }
       ],
-      "createdAt": "2026-05-10T21:47:56.999Z"
+      "createdAt": "2026-05-10T21:53:57.195Z"
     }
   ]
 }
