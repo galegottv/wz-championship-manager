@@ -152,6 +152,41 @@ footer{background:var(--bg1);border-top:1px solid var(--border);padding:32px 0;m
 .footer-copy{font-size:12px;color:var(--text3)}
 
 @media(max-width:768px){.plans-grid{grid-template-columns:1fr}.champs-grid{grid-template-columns:1fr}}
+/* ── REGISTRATION MODAL ── */
+.reg-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(6px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
+.reg-overlay.open{opacity:1;pointer-events:auto}
+.reg-modal{background:linear-gradient(145deg,#0f1520,#0d1018);border:1px solid rgba(255,106,0,.25);border-radius:16px;width:100%;max-width:480px;overflow:hidden;transform:translateY(20px);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.reg-overlay.open .reg-modal{transform:translateY(0)}
+.reg-modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;background:rgba(255,106,0,.07);border-bottom:1px solid rgba(255,106,0,.15)}
+.reg-modal-title{font-family:var(--font);font-size:16px;font-weight:900;letter-spacing:3px}
+.reg-modal-close{background:none;border:none;color:var(--text2);cursor:pointer;font-size:22px;line-height:1;padding:4px 8px;border-radius:4px;transition:.2s}
+.reg-modal-close:hover{color:#fff;background:rgba(255,255,255,.08)}
+.reg-modal-body{padding:24px}
+.reg-champ-info{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px 18px;margin-bottom:20px}
+.reg-champ-name{font-family:var(--font);font-size:20px;font-weight:900;letter-spacing:2px;margin-bottom:8px}
+.reg-champ-tags{display:flex;gap:8px;flex-wrap:wrap}
+.reg-tag{font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:2px;padding:3px 10px;border-radius:20px;border:1px solid}
+.reg-team-row{display:flex;align-items:center;gap:14px;background:rgba(0,255,135,.05);border:1px solid rgba(0,255,135,.15);border-radius:10px;padding:14px 18px;margin-bottom:20px}
+.reg-team-avatar{width:42px;height:42px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--font);font-size:18px;font-weight:900;flex-shrink:0}
+.reg-team-name{font-family:var(--font);font-size:16px;font-weight:900;letter-spacing:1px}
+.reg-team-role{font-size:11px;color:var(--text2);letter-spacing:1px;margin-top:2px}
+.reg-fee-box{background:rgba(255,215,0,.07);border:1px solid rgba(255,215,0,.2);border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
+.reg-fee-label{font-family:var(--font);font-size:11px;letter-spacing:3px;color:#ffd700}
+.reg-fee-val{font-family:var(--font);font-size:22px;font-weight:900;color:#ffd700}
+.reg-actions{display:flex;gap:10px}
+.reg-btn{flex:1;font-family:var(--font);font-size:13px;font-weight:900;letter-spacing:2px;padding:13px;border-radius:8px;border:none;cursor:pointer;transition:.2s}
+.reg-btn-primary{background:linear-gradient(135deg,var(--orange),#cc5500);color:#fff}
+.reg-btn-primary:hover{filter:brightness(1.12);box-shadow:0 0 20px rgba(255,106,0,.4)}
+.reg-btn-primary:disabled{opacity:.5;cursor:not-allowed;filter:none;box-shadow:none}
+.reg-btn-secondary{background:transparent;border:1px solid rgba(255,255,255,.12);color:var(--text2)}
+.reg-btn-secondary:hover{border-color:var(--orange);color:var(--orange)}
+.reg-feedback{margin-top:14px;font-family:var(--font);font-size:12px;letter-spacing:1px;padding:10px 14px;border-radius:8px;display:none}
+.reg-feedback.ok{display:block;background:rgba(0,255,135,.1);border:1px solid rgba(0,255,135,.3);color:#00ff87}
+.reg-feedback.err{display:block;background:rgba(255,45,85,.1);border:1px solid rgba(255,45,85,.3);color:#ff2d55}
+.reg-feedback.warn{display:block;background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.3);color:#ffd700}
+.reg-spinner{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px 20px;color:var(--text2);font-family:var(--font);font-size:12px;letter-spacing:3px}
+.reg-spinner-ring{width:36px;height:36px;border:3px solid rgba(255,106,0,.15);border-top-color:var(--orange);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -443,7 +478,7 @@ function buildMapBanner(mode) {
 }
 
 function buildCard(c) {
-  const teams = c.teams?.length || 0;
+  const teams = c.registrationCount ?? c.teams?.length ?? 0;
   const done = c.matches?.filter(m => m.status === 'done').length || 0;
   const modeLabel = c.mode === 'resurgence' ? '🔄 Resurgência' : '💀 Battle Royale';
   const schedLabel = c.scheduledAt
@@ -492,11 +527,145 @@ function buildCard(c) {
   </div>`;
 }
 
-function openRegisterModal(champId, champName, fee) {
-  const usr = localStorage.getItem('wzc_user');
-  if (!usr) { window.location.href = 'login?next=teams'; return; }
-  // Redirect to teams page with champId pre-selected
-  window.location.href = `teams.html?register=${encodeURIComponent(champId)}&champName=${encodeURIComponent(champName)}&fee=${fee}`;
+// ── REGISTRATION MODAL SYSTEM ──
+let REG_CHAMP = null;
+
+function closeRegModal() {
+  document.getElementById('reg-overlay').classList.remove('open');
+  REG_CHAMP = null;
+}
+
+async function openRegisterModal(champId, champName, fee) {
+  // 1. Must be logged in
+  const rawUser = localStorage.getItem('wzc_user');
+  if (!rawUser) { window.location.href = `login?next=home`; return; }
+
+  const overlay = document.getElementById('reg-overlay');
+  const body    = document.getElementById('reg-body');
+  overlay.classList.add('open');
+  body.innerHTML = `<div class="reg-spinner"><div class="reg-spinner-ring"></div>CARREGANDO...</div>`;
+
+  try {
+    const token   = localStorage.getItem('wzc_token');
+    const userObj = JSON.parse(rawUser);
+    const userId  = userObj.id;
+    const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+    // 2. Fetch user's team
+    const teamResp = await fetch('/api/teams/my', { headers });
+    const team = teamResp.ok ? await teamResp.json() : null;
+
+    // 3. Fetch existing registrations for this championship
+    const regResp = await fetch(`/api/championships/${champId}/registrations`);
+    const regs = regResp.ok ? await regResp.json() : [];
+
+    // Determine user's role in the team
+    let userRole = null;
+    if (team) {
+      if (team.ownerId === userId) userRole = 'owner';
+      else {
+        const member = (team.members||[]).find(m => m.userId === userId);
+        if (member) userRole = member.role || 'member';
+      }
+    }
+
+    const canRegister = userRole === 'owner' || userRole === 'manager';
+    const alreadyIn   = team && regs.some(r => r.teamId === team.id);
+    const existingReg = alreadyIn ? regs.find(r => r.teamId === team.id) : null;
+
+    REG_CHAMP = { id: champId, name: champName, fee };
+
+    // Build mode/fee tags
+    const modeTag = `<span class="reg-tag" style="border-color:rgba(255,106,0,.3);color:var(--orange)">${fee > 0 ? '💰 PAGO' : '🆓 GRÁTIS'}</span>`;
+    const openTag = `<span class="reg-tag" style="border-color:rgba(0,255,135,.3);color:#00ff87">✔ INSCRIÇÕES ABERTAS</span>`;
+    const feeBox  = fee > 0
+      ? `<div class="reg-fee-box"><span class="reg-fee-label">TAXA DE INSCRIÇÃO</span><span class="reg-fee-val">R$ ${(fee/100).toFixed(2)}</span></div>`
+      : '';
+
+    // Team card
+    let teamSection = '';
+    if (!team) {
+      teamSection = `<div style="background:rgba(255,45,85,.08);border:1px solid rgba(255,45,85,.25);border-radius:10px;padding:18px;margin-bottom:20px;font-family:var(--font);font-size:13px;color:#ff6b8a;letter-spacing:1px;line-height:1.6">
+        ⚠️ Você não tem time cadastrado.<br>
+        <a href="teams" style="color:var(--orange);text-decoration:underline;margin-top:6px;display:inline-block">→ Criar meu time</a>
+      </div>`;
+    } else if (!canRegister) {
+      teamSection = `<div class="reg-team-row">
+        <div class="reg-team-avatar" style="background:${team.color||'#ff6a00'}22;color:${team.color||'#ff6a00'}">${(team.tag||'?').slice(0,3)}</div>
+        <div><div class="reg-team-name">${team.name}</div><div class="reg-team-role">Você é membro — apenas o dono ou gerente pode inscrever</div></div>
+      </div>`;
+    } else if (alreadyIn) {
+      const statusLabel = { approved:'✅ APROVADO', pending_payment:'⏳ AGUARDANDO PAGAMENTO', pending:'⏳ PENDENTE' }[existingReg?.status] || existingReg?.status;
+      teamSection = `<div class="reg-team-row">
+        <div class="reg-team-avatar" style="background:${team.color||'#ff6a00'}22;color:${team.color||'#ff6a00'}">${(team.tag||'?').slice(0,3)}</div>
+        <div><div class="reg-team-name">${team.name}</div><div class="reg-team-role">${statusLabel}</div></div>
+      </div>`;
+    } else {
+      teamSection = `<div class="reg-team-row">
+        <div class="reg-team-avatar" style="background:${team.color||'#ff6a00'}22;color:${team.color||'#ff6a00'}">${(team.tag||'?').slice(0,3)}</div>
+        <div><div class="reg-team-name">${team.name}</div><div class="reg-team-role">${userRole === 'owner' ? '👑 Dono' : '🛡️ Gerente'} — apto para inscrever</div></div>
+      </div>`;
+    }
+
+    // Action buttons
+    const canSubmit = team && canRegister && !alreadyIn;
+    const confirmBtn = canSubmit
+      ? `<button class="reg-btn reg-btn-primary" id="reg-confirm-btn" onclick="confirmRegister()">✔ CONFIRMAR INSCRIÇÃO</button>`
+      : `<button class="reg-btn reg-btn-primary" disabled>${alreadyIn ? '✔ JÁ INSCRITO' : '⚠ SEM PERMISSÃO'}</button>`;
+
+    body.innerHTML = `
+      <div class="reg-champ-info">
+        <div class="reg-champ-name">${champName}</div>
+        <div class="reg-champ-tags">${modeTag}${openTag}</div>
+      </div>
+      ${feeBox}
+      ${teamSection}
+      <div class="reg-actions">
+        ${confirmBtn}
+        <button class="reg-btn reg-btn-secondary" onclick="closeRegModal()">CANCELAR</button>
+      </div>
+      <div class="reg-feedback" id="reg-fb"></div>
+    `;
+
+  } catch(e) {
+    body.innerHTML = `<div class="reg-feedback err" style="display:block">Erro ao carregar dados: ${e.message}</div>
+      <div class="reg-actions"><button class="reg-btn reg-btn-secondary" onclick="closeRegModal()">FECHAR</button></div>`;
+  }
+}
+
+async function confirmRegister() {
+  if (!REG_CHAMP) return;
+  const btn = document.getElementById('reg-confirm-btn');
+  const fb  = document.getElementById('reg-fb');
+  btn.disabled = true;
+  btn.textContent = 'ENVIANDO...';
+
+  try {
+    const rawUser = localStorage.getItem('wzc_user');
+    const token   = localStorage.getItem('wzc_token');
+    const resp = await fetch(`/api/championships/${REG_CHAMP.id}/register`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'Erro ao inscrever');
+
+    if (data.requiresPayment || data.reg?.status === 'pending_payment') {
+      fb.className = 'reg-feedback warn';
+      fb.textContent = `⏳ Inscrição enviada! Taxa: R$ ${(REG_CHAMP.fee/100).toFixed(2)} — aguardando pagamento. O organizador entrará em contato.`;
+    } else {
+      fb.className = 'reg-feedback ok';
+      fb.textContent = '✅ Time inscrito com sucesso! Aguarde aprovação do organizador.';
+    }
+    btn.textContent = '✔ INSCRITO';
+    setTimeout(()=>{ closeRegModal(); loadChampionships(); }, 3000);
+  } catch(e) {
+    fb.className = 'reg-feedback err';
+    fb.textContent = '✗ ' + e.message;
+    btn.disabled = false;
+    btn.textContent = 'TENTAR NOVAMENTE';
+  }
 }
 
 // Load championships from API (server-side) + localStorage fallback
@@ -534,5 +703,17 @@ async function loadChampionships() {
 renderHeaderAuth();
 loadChampionships();
 </script>
+<!-- REGISTRATION MODAL -->
+<div id="reg-overlay" class="reg-overlay" onclick="if(event.target===this)closeRegModal()">
+  <div class="reg-modal">
+    <div class="reg-modal-header">
+      <span class="reg-modal-title">🎮 INSCREVER TIME</span>
+      <button class="reg-modal-close" onclick="closeRegModal()">×</button>
+    </div>
+    <div class="reg-modal-body" id="reg-body">
+      <!-- filled dynamically -->
+    </div>
+  </div>
+</div>
 </body>
 </html>

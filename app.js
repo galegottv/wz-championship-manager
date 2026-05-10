@@ -1,4 +1,4 @@
-﻿// ── PONTOS OFICIAIS ──
+// ── PONTOS OFICIAIS ──
 const POINTS = {
   resurgence: [15,12,9,7,5,4,3,3,2,2,1,1,1,1,1,0,0,0,0,0],
   br:         [25,20,17,15,13,11,9,8,7,6,5,4,3,2,2,1,1,1,1,0]
@@ -218,9 +218,24 @@ function renderSetup(){
   document.getElementById('cfg-mode').value=S.mode||'resurgence';
   document.getElementById('cfg-rounds').value=S.rounds||4;
   const schedEl=document.getElementById('cfg-scheduled-at');
-  if(schedEl) schedEl.value=S.scheduledAt||'';
+  if(schedEl) {
+    // datetime-local requires YYYY-MM-DDTHH:mm format
+    const raw = S.scheduledAt || '';
+    if(raw) {
+      try {
+        const d = new Date(raw);
+        if(!isNaN(d)) {
+          const local = new Date(d.getTime() - d.getTimezoneOffset()*60000);
+          schedEl.value = local.toISOString().slice(0,16);
+        } else schedEl.value = '';
+      } catch { schedEl.value = ''; }
+    } else schedEl.value = '';
+  }
   const descEl=document.getElementById('cfg-description');
   if(descEl) descEl.value=S.description||'';
+  // registrations open toggle
+  const regOpenEl = document.getElementById('cfg-registrations-open');
+  if(regOpenEl) regOpenEl.checked = S.registrationsOpen !== false;
   // live url
   const liveInput=document.getElementById('cfg-live-url');
   if(liveInput) liveInput.value=S.liveUrl||'';
@@ -351,6 +366,8 @@ function setupEvents(){
     S.rounds=parseInt(document.getElementById('cfg-rounds').value)||4;
     S.scheduledAt=document.getElementById('cfg-scheduled-at').value||'';
     S.description=document.getElementById('cfg-description').value.trim()||'';
+    const regOpenEl = document.getElementById('cfg-registrations-open');
+    if(regOpenEl) S.registrationsOpen = regOpenEl.checked;
     save();renderAll();
     document.getElementById('info-feedback').textContent='✓ Salvo!';
     document.getElementById('info-feedback').className='admin-feedback ok';

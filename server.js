@@ -598,7 +598,15 @@ app.patch('/api/teams/:id/members/:userId/role', authMiddleware, async (req, res
 // ══════════════════════════════════════════════════════
 
 app.get('/api/championships', async (req, res) => {
-  res.json(await db2.readChamps());
+  try {
+    const champs = await db2.readChamps();
+    const allRegs = await db2.readRegs();
+    const enriched = champs.map(c => ({
+      ...c,
+      registrationCount: allRegs.filter(r => r.champId === c.id).length,
+    }));
+    res.json(enriched);
+  } catch { res.json(await db2.readChamps()); }
 });
 
 app.post('/api/championships', authMiddleware, async (req, res) => {
@@ -606,7 +614,7 @@ app.post('/api/championships', authMiddleware, async (req, res) => {
     const user = req.user;
     if (!['admin','pro','elite'].includes(user.plan) && user.role !== 'admin')
       return res.status(403).json({ error: 'Plano PRO ou ELITE necessário' });
-    const { name, mode, season, prize, entryFee, registrationsOpen } = req.body;
+    const { name, mode, season, prize, entryFee, registrationsOpen, scheduledAt, description } = req.body;
     if (!name) return res.status(400).json({ error: 'Nome obrigatório' });
     const champ = {
       id: `champ_${Date.now()}`, name, mode: mode || 'resurgence',
