@@ -14,5 +14,25 @@
       "subscriptionExpiry": null
     }
   ],
-  "championships": []
+  "championships": [],
+  "teams": [
+    {
+      "id": "team_1778449676999",
+      "name": "GZB E-sports",
+      "tag": "GZB",
+      "color": "#ff6a00",
+      "logo": "",
+      "ownerId": "admin-001",
+      "ownerNick": "Admin",
+      "memberLimit": 7,
+      "members": [
+        {
+          "userId": "admin-001",
+          "nickname": "Admin",
+          "role": "captain"
+        }
+      ],
+      "createdAt": "2026-05-10T21:47:56.999Z"
+    }
+  ]
 }
