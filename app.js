@@ -307,13 +307,15 @@ async function initAdminChampLoader() {
     if (!resp.ok) return;
     const champs = resp.ok ? await resp.json() : [];
 
-    // ── AUTO-LOAD for owner: if no champ in localStorage, load the most recent one owned by this user
+    // ── AUTO-LOAD: if no champ in localStorage, auto-load the most recent applicable one
     const hasLocal = localStorage.getItem(LS_KEY);
     const noChampLoaded = !hasLocal || (!S.apiId && !S.teams.length && !S.groups.length && S.name === 'WZ Championship');
     if (noChampLoaded && me.id) {
-      const mine = champs
-        .filter(c => c.ownerId === me.id)
-        .sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
+      // Admins see ALL championships; owners only see their own
+      const candidates = isAdmin
+        ? [...champs].sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0))
+        : champs.filter(c => c.ownerId === me.id).sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
+      const mine = candidates;
       if (mine.length > 0) {
         const chosen = mine[0];
         S = blank();
