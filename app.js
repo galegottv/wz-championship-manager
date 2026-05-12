@@ -1,4 +1,4 @@
-﻿// ── PONTOS OFICIAIS ──
+// ── PONTOS OFICIAIS ──
 const POINTS = {
   resurgence: [15,12,9,7,5,4,3,3,2,2,1,1,1,1,1,0,0,0,0,0],
   br:         [25,20,17,15,13,11,9,8,7,6,5,4,3,2,2,1,1,1,1,0]
@@ -289,42 +289,76 @@ function addRegTeam(teamId, teamName, teamTag, teamColor) {
   loadRegistrationsPanel();
 }
 
-// ── ADMIN: load any championship from API ─────────────────────────────────────
+// ── AUTO-LOAD: owner + admin championship loader ──────────────────────────────
 async function initAdminChampLoader() {
   const me = JSON.parse(localStorage.getItem('wzc_user') || '{}');
-  if (me.role !== 'admin') return;
-  // Show TORNEIOS nav link for admins
+  const isAdmin = me.role === 'admin';
+
+  // Show TORNEIOS nav button only for admins
   const tnav = document.getElementById('btn-tournaments-nav');
-  if (tnav) tnav.style.display = 'inline-flex';
+  if (tnav && isAdmin) tnav.style.display = 'inline-flex';
+
+  // Show admin champ selector panel only for admins
   const wrap = document.getElementById('admin-load-champ-wrap');
-  if (wrap) wrap.style.display = 'block';
+  if (wrap && isAdmin) wrap.style.display = 'block';
 
   try {
     const resp = await fetch('/api/championships');
+    if (!resp.ok) return;
     const champs = resp.ok ? await resp.json() : [];
-    const sel = document.getElementById('admin-champ-select');
-    if (!sel) return;
-    if (!champs.length) { sel.innerHTML = '<option value="">Nenhum campeonato cadastrado</option>'; return; }
-    sel.innerHTML = champs.map(c => `<option value="${c.id}">${c.name} — ${c.season||''}</option>`).join('');
-    const btn = document.getElementById('btn-load-existing-champ');
-    if (btn) btn.onclick = async () => {
-      const id = sel.value;
-      if (!id) return;
-      const chosen = champs.find(c => c.id === id);
-      if (!chosen) return;
-      // Load into S (merge with current blank)
-      S = blank();
-      S.name = chosen.name; S.season = chosen.season || ''; S.prize = chosen.prize || '';
-      S.mode = chosen.mode || 'resurgence'; S.scheduledAt = chosen.scheduledAt || '';
-      S.description = chosen.description || ''; S.registrationsOpen = chosen.registrationsOpen;
-      S.liveUrl = chosen.liveUrl || ''; S.isLive = chosen.isLive || false;
-      S.apiId = chosen.id;
-      save(); renderAll();
-      document.getElementById('empty-screen').style.display = 'none';
-      document.getElementById('champ-view').style.display = 'block';
-      showToast(`Campeonato "${chosen.name}" carregado!`, 'ok');
-    };
-  } catch(e) { console.warn('Admin loader:', e.message); }
+
+    // ── AUTO-LOAD for owner: if no champ in localStorage, load the most recent one owned by this user
+    const hasLocal = localStorage.getItem(LS_KEY);
+    const noChampLoaded = !hasLocal || (!S.apiId && !S.teams.length && !S.groups.length && S.name === 'WZ Championship');
+    if (noChampLoaded && me.id) {
+      const mine = champs
+        .filter(c => c.ownerId === me.id)
+        .sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
+      if (mine.length > 0) {
+        const chosen = mine[0];
+        S = blank();
+        S.name = chosen.name; S.season = chosen.season || ''; S.prize = chosen.prize || '';
+        S.mode = chosen.mode || 'resurgence'; S.scheduledAt = chosen.scheduledAt || '';
+        S.description = chosen.description || ''; S.registrationsOpen = chosen.registrationsOpen;
+        S.liveUrl = chosen.liveUrl || ''; S.isLive = chosen.isLive || false;
+        S.apiId = chosen.id; S.entryFee = chosen.entryFee || 0;
+        save(); renderAll();
+        const es = document.getElementById('empty-screen');
+        const cv = document.getElementById('champ-view');
+        if (es) es.style.display = 'none';
+        if (cv) cv.style.display = 'block';
+        showToast(`🏆 Campeonato "${chosen.name}" carregado!`, 'ok');
+        return;
+      }
+    }
+
+    // ── Admin dropdown: populate with all championships
+    if (isAdmin) {
+      const sel = document.getElementById('admin-champ-select');
+      if (!sel) return;
+      if (!champs.length) { sel.innerHTML = '<option value="">Nenhum campeonato cadastrado</option>'; return; }
+      sel.innerHTML = champs.map(c => `<option value="${c.id}">${c.name} — ${c.ownerNick||''} — ${c.season||''}</option>`).join('');
+      const btn = document.getElementById('btn-load-existing-champ');
+      if (btn) btn.onclick = async () => {
+        const id = sel.value;
+        if (!id) return;
+        const chosen = champs.find(c => c.id === id);
+        if (!chosen) return;
+        S = blank();
+        S.name = chosen.name; S.season = chosen.season || ''; S.prize = chosen.prize || '';
+        S.mode = chosen.mode || 'resurgence'; S.scheduledAt = chosen.scheduledAt || '';
+        S.description = chosen.description || ''; S.registrationsOpen = chosen.registrationsOpen;
+        S.liveUrl = chosen.liveUrl || ''; S.isLive = chosen.isLive || false;
+        S.apiId = chosen.id; S.entryFee = chosen.entryFee || 0;
+        save(); renderAll();
+        const es = document.getElementById('empty-screen');
+        const cv = document.getElementById('champ-view');
+        if (es) es.style.display = 'none';
+        if (cv) cv.style.display = 'block';
+        showToast(`Campeonato "${chosen.name}" carregado!`, 'ok');
+      };
+    }
+  } catch(e) { console.warn('Auto-load champ:', e.message); }
 }
 // Sync current championship to API (so home.html shows it to all users)
 async function syncChampToAPI() {
@@ -712,8 +746,8 @@ function setupEvents(){
     document.getElementById('empty-screen').style.display='flex';
     showToast('Campeonato excluído','err');
   };
-  // init visibility
-  const hasData=S.name&&S.name!=='WZ Championship'||S.teams.length>0||S.groups.length>0;
+  // init visibility — show champ if we have meaningful data OR a linked apiId
+  const hasData = (S.name && S.name !== 'WZ Championship') || S.teams.length > 0 || S.groups.length > 0 || !!S.apiId;
   if(hasData){
     document.getElementById('empty-screen').style.display='none';
     document.getElementById('champ-view').style.display='block';
