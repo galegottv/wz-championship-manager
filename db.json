@@ -1,38 +1,55 @@
-{
-  "users": [
-    {
-      "id": "admin-001",
-      "nickname": "Admin",
-      "email": "admin@wzchamp.gg",
-      "passwordHash": "$2a$10$coWKJQgwh4obsAJRD18yYezFk5XuhQ9IhBPBKUAmNYOnIrb8Gllum",
-      "role": "admin",
-      "plan": "elite",
-      "status": "active",
-      "createdAt": "2026-01-01T00:00:00.000Z",
-      "stripeCustomerId": null,
-      "subscriptionId": null,
-      "subscriptionExpiry": null
-    }
-  ],
-  "championships": [],
-  "teams": [
-    {
-      "id": "team_1778450037195",
-      "name": "GZB E-sports",
-      "tag": "GZB",
-      "color": "#ff6a00",
-      "logo": "/uploads/1778450037193-lcbs1hfr61.png",
-      "ownerId": "admin-001",
-      "ownerNick": "Admin",
-      "memberLimit": 7,
-      "members": [
-        {
-          "userId": "admin-001",
-          "nickname": "Admin",
-          "role": "captain"
-        }
-      ],
-      "createdAt": "2026-05-10T21:53:57.195Z"
-    }
-  ]
+﻿{
+    "users":  [
+                  {
+                      "id":  "admin-001",
+                      "nickname":  "Admin",
+                      "email":  "admin@wzchamp.gg",
+                      "passwordHash":  "$2a$10$QS.zJJKhHBkRMFt2GbqrhOLgaeFFfx/b1g.cYAbjkXcZ1Jj7c8JRu",
+                      "role":  "admin",
+                      "plan":  "elite",
+                      "status":  "active",
+                      "createdAt":  "2026-01-01T00:00:00.000Z",
+                      "stripeCustomerId":  null,
+                      "subscriptionId":  null,
+                      "subscriptionExpiry":  null
+                  }
+              ],
+    "championships":  [
+                          {
+                              "isLive":  false,
+                              "id":  "champ_1778550069818",
+                              "ownerNick":  "Admin",
+                              "registrationsOpen":  true,
+                              "name":  "WZ Championship",
+                              "ownerId":  "admin-001",
+                              "season":  "Season 1",
+                              "prize":  "",
+                              "liveUrl":  "",
+                              "mode":  "resurgence",
+                              "entryFee":  0,
+                              "scheduledAt":  null,
+                              "createdAt":  "2026-05-12T01:41:09.8264638Z",
+                              "description":  ""
+                          }
+                      ],
+    "teams":  [
+                  {
+                      "id":  "team_1778450037195",
+                      "name":  "GZB E-sports",
+                      "tag":  "GZB",
+                      "color":  "#ff6a00",
+                      "logo":  "/uploads/1778450037193-lcbs1hfr61.png",
+                      "ownerId":  "admin-001",
+                      "ownerNick":  "Admin",
+                      "memberLimit":  7,
+                      "members":  [
+                                      {
+                                          "userId":  "admin-001",
+                                          "nickname":  "Admin",
+                                          "role":  "captain"
+                                      }
+                                  ],
+                      "createdAt":  "2026-05-10T21:53:57.195Z"
+                  }
+              ]
 }

@@ -723,20 +723,40 @@ function setupEvents(){
     if(b) b.onclick=()=>document.getElementById('modal-backdrop').style.display='none';
   });
   const modalConfirm=document.getElementById('modal-confirm');
-  if(modalConfirm) modalConfirm.onclick=()=>{
+  if(modalConfirm) modalConfirm.onclick=async ()=>{
     const n=document.getElementById('new-champ-name').value.trim();
     if(!n){showToast('Insira um nome!','err');return;}
+    // Disable button while saving
+    modalConfirm.disabled=true; modalConfirm.textContent='Criando...';
     S.name=n;
     S.season=document.getElementById('new-champ-season').value.trim()||'Season 1';
     S.mode=document.getElementById('new-champ-mode').value;
     S.prize=document.getElementById('new-champ-prize').value.trim();
-    S.liveUrl=S.liveUrl||'';
+    S.liveUrl=''; S.apiId=null;
+    // Save to API first
+    try {
+      const token=localStorage.getItem('wzc_token');
+      const resp=await fetch('/api/championships',{
+        method:'POST',
+        headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},
+        body:JSON.stringify({name:S.name,season:S.season,mode:S.mode,prize:S.prize,registrationsOpen:false,entryFee:0})
+      });
+      if(resp.ok){
+        const data=await resp.json();
+        S.apiId=data.id;
+        showToast(`Campeonato "${n}" criado no servidor!`,'ok');
+      } else {
+        const err=await resp.json().catch(()=>({}));
+        showToast(err.error||'Criado localmente (sem sync)','');
+      }
+    } catch(e){ showToast('Criado localmente (sem servidor)',''); }
     document.getElementById('modal-backdrop').style.display='none';
     document.getElementById('empty-screen').style.display='none';
     document.getElementById('champ-view').style.display='block';
+    modalConfirm.disabled=false; modalConfirm.textContent='CRIAR';
     save();renderAll();
-    showToast(`Campeonato "${n}" criado!`,'ok');
   };
+
   // delete champ
   const delBtn=document.getElementById('btn-delete-champ');
   if(delBtn) delBtn.onclick=()=>{
