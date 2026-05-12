@@ -791,7 +791,7 @@ app.post('/api/ai/score-screenshot', adminOnly, upload.single('screenshot'), asy
   try {
     const { GoogleGenerativeAI } = require('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const imageData = fs.readFileSync(req.file.path);
     const base64 = imageData.toString('base64');
@@ -825,7 +825,15 @@ Extraia TODOS os times/jogadores visíveis na tela.`;
     res.json(parsed);
   } catch(e) {
     fs.unlink(req.file?.path || '', () => {});
-    res.status(500).json({ error: e.message });
+    // Detect quota / rate limit errors
+    const msg = e.message || '';
+    if (msg.includes('429') || msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('rate')) {
+      return res.status(429).json({ error: 'Limite de uso da IA atingido. Aguarde alguns minutos e tente novamente.' });
+    }
+    if (msg.includes('403') || msg.toLowerCase().includes('api key')) {
+      return res.status(403).json({ error: 'Chave da API Gemini inválida ou sem permissão.' });
+    }
+    res.status(500).json({ error: 'Erro ao processar imagem com IA: ' + msg.split('\n')[0] });
   }
 });
 

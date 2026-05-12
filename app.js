@@ -293,6 +293,9 @@ function addRegTeam(teamId, teamName, teamTag, teamColor) {
 async function initAdminChampLoader() {
   const me = JSON.parse(localStorage.getItem('wzc_user') || '{}');
   if (me.role !== 'admin') return;
+  // Show TORNEIOS nav link for admins
+  const tnav = document.getElementById('btn-tournaments-nav');
+  if (tnav) tnav.style.display = 'inline-flex';
   const wrap = document.getElementById('admin-load-champ-wrap');
   if (wrap) wrap.style.display = 'block';
 
@@ -536,9 +539,10 @@ function setupEvents(){
     document.getElementById('cfg-group-name').value='';
     save();renderAll();showToast(`Grupo ${n} criado!`,'ok');
   };
-  // load registrations panel
+  // load registrations panel (auto, no click needed)
   const regBtn = document.getElementById('btn-load-registrations');
-  if(regBtn) { regBtn.onclick = loadRegistrationsPanel; loadRegistrationsPanel(); }
+  if(regBtn) regBtn.onclick = loadRegistrationsPanel;
+  loadRegistrationsPanel(); // auto-load
   // add team
   document.getElementById('btn-cfg-add-team').onclick=()=>{
     const name=document.getElementById('cfg-team-name').value.trim();
