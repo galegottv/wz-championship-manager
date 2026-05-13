@@ -289,10 +289,37 @@ function addRegTeam(teamId, teamName, teamTag, teamColor) {
   loadRegistrationsPanel();
 }
 
-// ── AUTO-LOAD: owner + admin championship loader ──────────────────────────────
+// ── Helper: load a championship object into S and show the panel ──────────────
+function applyChampionship(chosen) {
+  // Keep local teams/matches/groups if same apiId (just refresh metadata)
+  const sameChamp = S.apiId && S.apiId === chosen.id;
+  if (!sameChamp) {
+    S = blank();
+  }
+  S.name = chosen.name;
+  S.season = chosen.season || S.season || '';
+  S.prize = chosen.prize || S.prize || '';
+  S.mode = chosen.mode || S.mode || 'resurgence';
+  S.scheduledAt = chosen.scheduledAt || S.scheduledAt || '';
+  S.description = chosen.description || S.description || '';
+  S.registrationsOpen = chosen.registrationsOpen !== undefined ? chosen.registrationsOpen : true;
+  S.liveUrl = chosen.liveUrl || S.liveUrl || '';
+  S.isLive = chosen.isLive || false;
+  S.apiId = chosen.id;
+  S.entryFee = chosen.entryFee || S.entryFee || 0;
+  save();
+  renderAll();
+  const es = document.getElementById('empty-screen');
+  const cv = document.getElementById('champ-view');
+  if (es) es.style.display = 'none';
+  if (cv) cv.style.display = 'block';
+}
+
+// ── AUTO-LOAD: always verifies against API — championship NEVER disappears ─────
 async function initAdminChampLoader() {
   const me = JSON.parse(localStorage.getItem('wzc_user') || '{}');
   const isAdmin = me.role === 'admin';
+  if (!me.id) return; // not logged in
 
   // Show TORNEIOS nav button only for admins
   const tnav = document.getElementById('btn-tournaments-nav');
@@ -303,65 +330,81 @@ async function initAdminChampLoader() {
   if (wrap && isAdmin) wrap.style.display = 'block';
 
   try {
-    const resp = await fetch('/api/championships');
+    const token = localStorage.getItem('wzc_token');
+    const resp = await fetch('/api/championships', token ? { headers: { Authorization: `Bearer ${token}` } } : {});
     if (!resp.ok) return;
     const champs = resp.ok ? await resp.json() : [];
 
-    // ── AUTO-LOAD: if no champ in localStorage, auto-load the most recent applicable one
-    const hasLocal = localStorage.getItem(LS_KEY);
-    const noChampLoaded = !hasLocal || (!S.apiId && !S.teams.length && !S.groups.length && S.name === 'WZ Championship');
-    if (noChampLoaded && me.id) {
-      // Admins see ALL championships; owners only see their own
-      const candidates = isAdmin
-        ? [...champs].sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0))
-        : champs.filter(c => c.ownerId === me.id).sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
-      const mine = candidates;
-      if (mine.length > 0) {
-        const chosen = mine[0];
-        S = blank();
-        S.name = chosen.name; S.season = chosen.season || ''; S.prize = chosen.prize || '';
-        S.mode = chosen.mode || 'resurgence'; S.scheduledAt = chosen.scheduledAt || '';
-        S.description = chosen.description || ''; S.registrationsOpen = chosen.registrationsOpen;
-        S.liveUrl = chosen.liveUrl || ''; S.isLive = chosen.isLive || false;
-        S.apiId = chosen.id; S.entryFee = chosen.entryFee || 0;
-        save(); renderAll();
-        const es = document.getElementById('empty-screen');
-        const cv = document.getElementById('champ-view');
-        if (es) es.style.display = 'none';
-        if (cv) cv.style.display = 'block';
-        showToast(`🏆 Campeonato "${chosen.name}" carregado!`, 'ok');
-        return;
+    // Candidates: admins can manage ANY championship; owners only their own
+    const candidates = isAdmin
+      ? [...champs].sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0))
+      : champs.filter(c => c.ownerId === me.id).sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
+
+    if (!candidates.length) return; // user has no championships in API yet
+
+    // ── CASE 1: S already has an apiId — verify it still exists in API
+    if (S.apiId) {
+      const found = champs.find(c => c.id === S.apiId);
+      if (!found) {
+        // Championship was deleted from API → silently load the most recent one
+        console.warn('[WZC] Championship', S.apiId, 'not found in API — loading most recent');
+        applyChampionship(candidates[0]);
+        showToast(`🏆 Campeonato "${candidates[0].name}" carregado!`, 'ok');
+      } else {
+        // Championship exists → refresh metadata from API (keeps local teams/matches)
+        applyChampionship(found);
       }
+    } else {
+      // ── CASE 2: No championship loaded at all → auto-load most recent
+      applyChampionship(candidates[0]);
+      showToast(`🏆 Campeonato "${candidates[0].name}" carregado!`, 'ok');
     }
+
+    // ── Multi-championship switcher (show if user has more than 1)
+    renderChampSwitcher(candidates);
 
     // ── Admin dropdown: populate with all championships
     if (isAdmin) {
       const sel = document.getElementById('admin-champ-select');
-      if (!sel) return;
-      if (!champs.length) { sel.innerHTML = '<option value="">Nenhum campeonato cadastrado</option>'; return; }
-      sel.innerHTML = champs.map(c => `<option value="${c.id}">${c.name} — ${c.ownerNick||''} — ${c.season||''}</option>`).join('');
-      const btn = document.getElementById('btn-load-existing-champ');
-      if (btn) btn.onclick = async () => {
-        const id = sel.value;
-        if (!id) return;
-        const chosen = champs.find(c => c.id === id);
-        if (!chosen) return;
-        S = blank();
-        S.name = chosen.name; S.season = chosen.season || ''; S.prize = chosen.prize || '';
-        S.mode = chosen.mode || 'resurgence'; S.scheduledAt = chosen.scheduledAt || '';
-        S.description = chosen.description || ''; S.registrationsOpen = chosen.registrationsOpen;
-        S.liveUrl = chosen.liveUrl || ''; S.isLive = chosen.isLive || false;
-        S.apiId = chosen.id; S.entryFee = chosen.entryFee || 0;
-        save(); renderAll();
-        const es = document.getElementById('empty-screen');
-        const cv = document.getElementById('champ-view');
-        if (es) es.style.display = 'none';
-        if (cv) cv.style.display = 'block';
-        showToast(`Campeonato "${chosen.name}" carregado!`, 'ok');
-      };
+      if (sel) {
+        sel.innerHTML = champs.map(c => `<option value="${c.id}" ${c.id===S.apiId?'selected':''}>${c.name} — ${c.ownerNick||''} — ${c.season||''}</option>`).join('');
+        const btn = document.getElementById('btn-load-existing-champ');
+        if (btn) btn.onclick = () => {
+          const chosen = champs.find(c => c.id === sel.value);
+          if (chosen) { applyChampionship(chosen); renderChampSwitcher(candidates); showToast(`Campeonato "${chosen.name}" carregado!`, 'ok'); }
+        };
+      }
     }
   } catch(e) { console.warn('Auto-load champ:', e.message); }
 }
+
+// ── Championship switcher UI (shown when user has multiple championships) ──────
+function renderChampSwitcher(candidates) {
+  // Inject or update a switcher dropdown in the header if more than 1 champ
+  let sw = document.getElementById('champ-switcher-wrap');
+  if (candidates.length <= 1) { if (sw) sw.style.display = 'none'; return; }
+  if (!sw) {
+    // Create switcher and inject into header right
+    sw = document.createElement('div');
+    sw.id = 'champ-switcher-wrap';
+    sw.style.cssText = 'display:flex;align-items:center;gap:8px;margin-right:8px;';
+    sw.innerHTML = `
+      <select id="champ-switcher-sel" style="background:#1a1a2e;border:1px solid rgba(255,106,0,.4);color:#fff;font-family:var(--font-cond);font-size:11px;letter-spacing:1px;padding:5px 10px;border-radius:6px;cursor:pointer;max-width:180px;">
+      </select>`;
+    const headerRight = document.querySelector('.header-right');
+    if (headerRight) headerRight.insertBefore(sw, headerRight.firstChild);
+  }
+  const sel = document.getElementById('champ-switcher-sel');
+  if (!sel) return;
+  sel.innerHTML = candidates.map(c => `<option value="${c.id}" ${c.id===S.apiId?'selected':''}>${c.name}</option>`).join('');
+  sw.style.display = 'flex';
+  sel.onchange = async () => {
+    const champs = await fetch('/api/championships').then(r=>r.json()).catch(()=>[]);
+    const chosen = champs.find(c => c.id === sel.value);
+    if (chosen) { applyChampionship(chosen); showToast(`🏆 "${chosen.name}" carregado!`, 'ok'); }
+  };
+}
+
 // Sync current championship to API (so home.html shows it to all users)
 async function syncChampToAPI() {
   try {
@@ -747,13 +790,16 @@ function setupEvents(){
         showToast(`Campeonato "${n}" criado no servidor!`,'ok');
       } else {
         const err=await resp.json().catch(()=>({}));
-        showToast(err.error||'Criado localmente (sem sync)','');
+        const errMsg = err.error||'Erro ao criar campeonato';
+        showToast('❌ ' + errMsg, 'err');
+        modalConfirm.disabled=false; modalConfirm.textContent='CRIAR CAMPEONATO';
+        return; // não fecha o modal em caso de erro
       }
     } catch(e){ showToast('Criado localmente (sem servidor)',''); }
     document.getElementById('modal-backdrop').style.display='none';
     document.getElementById('empty-screen').style.display='none';
     document.getElementById('champ-view').style.display='block';
-    modalConfirm.disabled=false; modalConfirm.textContent='CRIAR';
+    modalConfirm.disabled=false; modalConfirm.textContent='CRIAR CAMPEONATO';
     save();renderAll();
   };
 

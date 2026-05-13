@@ -1,55 +1,33 @@
-﻿{
-    "users":  [
-                  {
-                      "id":  "admin-001",
-                      "nickname":  "Admin",
-                      "email":  "admin@wzchamp.gg",
-                      "passwordHash":  "$2a$10$QS.zJJKhHBkRMFt2GbqrhOLgaeFFfx/b1g.cYAbjkXcZ1Jj7c8JRu",
-                      "role":  "admin",
-                      "plan":  "elite",
-                      "status":  "active",
-                      "createdAt":  "2026-01-01T00:00:00.000Z",
-                      "stripeCustomerId":  null,
-                      "subscriptionId":  null,
-                      "subscriptionExpiry":  null
-                  }
-              ],
-    "championships":  [
-                          {
-                              "isLive":  false,
-                              "id":  "champ_1778550069818",
-                              "ownerNick":  "Admin",
-                              "registrationsOpen":  true,
-                              "name":  "WZ Championship",
-                              "ownerId":  "admin-001",
-                              "season":  "Season 1",
-                              "prize":  "",
-                              "liveUrl":  "",
-                              "mode":  "resurgence",
-                              "entryFee":  0,
-                              "scheduledAt":  null,
-                              "createdAt":  "2026-05-12T01:41:09.8264638Z",
-                              "description":  ""
-                          }
-                      ],
-    "teams":  [
-                  {
-                      "id":  "team_1778450037195",
-                      "name":  "GZB E-sports",
-                      "tag":  "GZB",
-                      "color":  "#ff6a00",
-                      "logo":  "/uploads/1778450037193-lcbs1hfr61.png",
-                      "ownerId":  "admin-001",
-                      "ownerNick":  "Admin",
-                      "memberLimit":  7,
-                      "members":  [
-                                      {
-                                          "userId":  "admin-001",
-                                          "nickname":  "Admin",
-                                          "role":  "captain"
-                                      }
-                                  ],
-                      "createdAt":  "2026-05-10T21:53:57.195Z"
-                  }
-              ]
+{
+  "users": [
+    {
+      "id": "admin-001",
+      "nickname": "Admin",
+      "email": "admin@wzchamp.gg",
+      "passwordHash": "$2a$10$xQ6MqXJ.NhN355OIoMo5kO.fkhQkKlkC.LkUOwBBKRzc2beReEveK",
+      "role": "admin",
+      "plan": "elite",
+      "status": "active",
+      "createdAt": "2026-05-13T19:12:01.732Z",
+      "stripeCustomerId": null,
+      "subscriptionId": null,
+      "subscriptionExpiry": null
+    }
+  ],
+  "championships": [
+    {
+      "id": "champ_1778699521859",
+      "name": "WZ Open Brasil 2026",
+      "mode": "resurgence",
+      "season": "Season 1",
+      "prize": "R$ 5.000",
+      "entryFee": 0,
+      "registrationsOpen": true,
+      "ownerId": "admin-001",
+      "ownerNick": "Admin",
+      "createdAt": "2026-05-13T19:12:01.859Z"
+    }
+  ],
+  "teams": [],
+  "registrations": []
 }

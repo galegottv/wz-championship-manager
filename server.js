@@ -1,4 +1,4 @@
-﻿// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 //  WZ CHAMPIONSHIP — EXPRESS SERVER v5.1
 //  Suporte: Local (db.json) + Nuvem (MongoDB Atlas via MONGODB_URL)
 // ─────────────────────────────────────────────────────────────
@@ -585,8 +585,9 @@ app.get('/api/championships', async (req, res) => {
 app.post('/api/championships', authMiddleware, async (req, res) => {
   try {
     const user = req.user;
-    if (!['admin','pro','elite'].includes(user.plan) && user.role !== 'admin')
-      return res.status(403).json({ error: 'Plano PRO ou ELITE necessário' });
+    const canCreate = user.role === 'admin' || user.plan === 'pro' || user.plan === 'elite';
+    if (!canCreate)
+      return res.status(403).json({ error: 'Plano PRO ou ELITE necessário para criar campeonatos' });
     const { name, mode, season, prize, entryFee, registrationsOpen, scheduledAt, description } = req.body;
     if (!name) return res.status(400).json({ error: 'Nome obrigatório' });
     const champ = {
