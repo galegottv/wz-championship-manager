@@ -477,14 +477,50 @@ function renderSetup(){
   // team select in setup
   const tgSel=document.getElementById('cfg-team-group');
   tgSel.innerHTML=S.groups.map(g=>`<option value="${g.name}">Grupo ${g.name}</option>`).join('');
-  // teams list
+  // teams list — mostra times adicionados + inscrições pendentes integradas
   const tl=document.getElementById('teams-manage-list');
-  tl.innerHTML=S.teams.length?S.teams.map(t=>`<div class="manage-item">
+  const existingHTML = S.teams.length ? S.teams.map(t=>`<div class="manage-item">
     <div class="manage-item-info">
-      <div style="width:12px;height:12px;border-radius:50%;background:${t.color};flex-shrink:0"></div>
-      <span>${t.name}</span><span class="manage-item-sub">${t.tag} — GRP ${t.group}</span></div>
+      <div style="width:12px;height:12px;border-radius:50%;background:${t.color||'#ff6a00'};flex-shrink:0"></div>
+      <span>${t.name}</span><span class="manage-item-sub">${t.tag} — GRP ${t.group} <span style="color:var(--green);font-size:9px;letter-spacing:2px">✓ ADICIONADO</span></span></div>
     <button class="btn-remove" onclick="removeTeam('${t.id}')">REMOVER</button></div>`).join('')
-    :'<div style="color:var(--text-3);font-family:var(--font-cond);font-size:13px;letter-spacing:1px">Nenhum time criado</div>';
+    : '<div style="color:var(--text-3);font-family:var(--font-cond);font-size:12px;letter-spacing:1px;padding:8px 0">Nenhum time criado ainda</div>';
+  tl.innerHTML = existingHTML;
+  // Carrega inscrições da API automaticamente
+  if (S.apiId) {
+    const token = localStorage.getItem('wzc_token');
+    fetch(`/api/championships/${S.apiId}/registrations`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    }).then(r => r.ok ? r.json() : []).then(regs => {
+      if (!regs || !regs.length) return;
+      const statusLabel = { pending:'⏳ Pendente', pending_payment:'💰 Ag. Pagamento', approved:'✅ Aprovado', rejected:'❌ Rejeitado' };
+      const statusColor = { pending:'#ffd700', pending_payment:'#ff9500', approved:'#00ff87', rejected:'#ff2d55' };
+      const regHTML = regs.map(r => {
+        const alreadyIn = S.teams.some(t => t.id === r.teamId || t.tag === r.teamTag);
+        if (alreadyIn) return ''; // já na lista acima
+        const color = r.teamColor || '#ff6a00';
+        const grpSel = document.getElementById('cfg-team-group')?.value || S.groups[0]?.name || '';
+        const addBtn = `<button onclick="addRegTeam('${r.teamId}','${(r.teamName||'').replace(/'/g,"\\'")}','${(r.teamTag||'').replace(/'/g,"\\'")}','${color}')"
+          style="background:rgba(0,255,135,.1);border:1px solid rgba(0,255,135,.3);color:#00ff87;font-family:var(--font-cond);font-size:10px;letter-spacing:2px;padding:5px 12px;border-radius:6px;cursor:pointer">+ ADICIONAR</button>`;
+        const approveBtn = (r.status === 'pending' || r.status === 'pending_payment') && S.apiId
+          ? `<button onclick="approveReg('${S.apiId}','${r.id}')"
+              style="background:rgba(255,106,0,.1);border:1px solid rgba(255,106,0,.3);color:#ff6a00;font-family:var(--font-cond);font-size:10px;letter-spacing:2px;padding:5px 12px;border-radius:6px;cursor:pointer;margin-right:6px">✔ APROVAR</button>`
+          : '';
+        return `<div class="manage-item" style="border-color:rgba(255,215,0,.15);background:rgba(255,215,0,.02)">
+          <div class="manage-item-info">
+            <div style="width:12px;height:12px;border-radius:50%;background:${color};flex-shrink:0"></div>
+            <span>${r.teamName||r.teamId}</span>
+            <span class="manage-item-sub">${r.teamTag||'?'} <span style="color:${statusColor[r.status]||'#4a5568'};font-size:9px;letter-spacing:2px">${statusLabel[r.status]||r.status}</span></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">${approveBtn}${addBtn}</div>
+        </div>`;
+      }).filter(Boolean).join('');
+      if (regHTML) {
+        const divider = `<div style="font-family:var(--font-cond);font-size:10px;letter-spacing:3px;color:var(--text-3);padding:10px 0 6px;border-top:1px solid rgba(255,255,255,.05);margin-top:8px">📋 INSCRIÇÕES RECEBIDAS</div>`;
+        tl.innerHTML += divider + regHTML;
+      }
+    }).catch(() => {});
+  }
   // round filter
   const rf=document.getElementById('match-round-filter');
   rf.innerHTML='<option value="all">Todas as Rodadas</option>'+
